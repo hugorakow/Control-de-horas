@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HoraLog</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #0c0c0c;
+      --surface:    #151515;
+      --surface2:   #1c1c1c;
+      --border:     #272727;
+      --border2:    #333;
+      --accent:     #e8a020;
+      --accent-dim: rgba(232,160,32,0.12);
+      --text:       #ededed;
+      --text-dim:   #777;
+      --text-mid:   #aaa;
+      --success:    #3ec66b;
+      --danger:     #e85050;
+    }
+
+    body { font-family: 'Barlow', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    .hidden { display: none !important; }
+
+    /* ── LOGIN ── */
+    #login-screen {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px;
+      background: radial-gradient(ellipse 60% 60% at 15% 50%, rgba(232,160,32,0.06) 0%, transparent 70%), var(--bg);
+    }
+    .login-box { width: 100%; max-width: 360px; }
+    .brand { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 3rem; letter-spacing: -2px; line-height: 1; margin-bottom: 6px; }
+    .brand em { color: var(--accent); font-style: normal; }
+    .brand-sub { color: var(--text-dim); font-size: 0.78rem; font-weight: 400; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 44px; }
+
+    .tab-row { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 28px; }
+    .tab-btn {
+      background: none; border: none; color: var(--text-dim);
+      font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 0.85rem;
+      letter-spacing: 0.1em; text-transform: uppercase; padding: 8px 0; margin-right: 24px;
+      cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 0.2s, border-color 0.2s;
+    }
+    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    .field { margin-bottom: 14px; }
+    .field label { display: block; font-size: 0.68rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 6px; }
+    .field input {
+      width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 6px;
+      padding: 11px 14px; color: var(--text); font-family: 'Barlow', sans-serif; font-size: 0.95rem; outline: none; transition: border-color 0.2s;
+    }
+    .field input:focus { border-color: var(--accent); }
+
+    .btn-primary {
+      width: 100%; background: var(--accent); color: #000; border: none; border-radius: 6px; padding: 13px;
+      font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 1rem;
+      letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; margin-top: 6px; transition: opacity 0.2s;
+    }
+    .btn-primary:hover { opacity: 0.85; }
+    .btn-primary:disabled { opacity: 0.35; cursor: default; }
+
+    .err-box { background: rgba(232,80,80,0.1); border: 1px solid rgba(232,80,80,0.3); color: #f7a0a0; border-radius: 6px; padding: 10px 14px; font-size: 0.82rem; margin-top: 12px; }
+    .ok-box  { background: rgba(62,198,107,0.1); border: 1px solid rgba(62,198,107,0.3); color: #86efac; border-radius: 6px; padding: 10px 14px; font-size: 0.82rem; margin-top: 12px; }
+
+    /* ── TOPBAR ── */
+    #app-screen { min-height: 100vh; }
+    .topbar {
+      background: var(--surface); border-bottom: 1px solid var(--border); padding: 13px 20px;
+      display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 20;
+    }
+    .topbar .brand { font-size: 1.5rem; margin: 0; letter-spacing: -1px; }
+    .topbar-right { display: flex; align-items: center; gap: 10px; }
+    .topbar-user { font-size: 0.8rem; color: var(--text-mid); }
+    .btn-sm {
+      background: none; border: 1px solid var(--border); color: var(--text-dim); padding: 5px 12px;
+      border-radius: 4px; font-family: 'Barlow', sans-serif; font-size: 0.78rem; cursor: pointer; transition: all 0.2s;
+    }
+    .btn-sm:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── CONTENT ── */
+    .content { max-width: 560px; margin: 0 auto; padding: 28px 18px 80px; }
+    .spinner { text-align: center; color: var(--text-dim); font-size: 0.85rem; padding: 60px 0; letter-spacing: 0.06em; }
+
+    /* ── PERIOD CARD ── */
+    .period-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 28px; }
+    .period-card-header { padding: 18px 22px 14px; border-bottom: 1px solid var(--border); }
+    .period-tag { font-family: 'Barlow Condensed', sans-serif; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
+    .period-name { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 1.4rem; letter-spacing: -0.3px; }
+    .period-card-body { padding: 18px 22px; }
+
+    .hours-row { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+    .hours-wrap { flex: 1; position: relative; }
+    .hours-wrap input {
+      width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+      padding: 12px 52px 12px 16px; color: var(--text);
+      font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 2rem; outline: none; transition: border-color 0.2s;
+    }
+    .hours-wrap input:focus { border-color: var(--accent); }
+    .hours-wrap input::placeholder { color: var(--border2); }
+    .hours-unit { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 0.75rem; font-weight: 600; color: var(--text-dim); letter-spacing: 0.05em; pointer-events: none; }
+
+    .btn-save {
+      background: var(--accent); color: #000; border: none; border-radius: 8px; padding: 0 20px; height: 56px;
+      font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 0.9rem;
+      letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; white-space: nowrap; transition: opacity 0.2s;
+    }
+    .btn-save:hover { opacity: 0.85; }
+    .btn-save:disabled { opacity: 0.35; cursor: default; }
+
+    .cap-notice { background: var(--accent-dim); border: 1px solid rgba(232,160,32,0.25); border-radius: 6px; padding: 8px 12px; font-size: 0.78rem; color: var(--accent); margin-bottom: 14px; }
+
+    .total-row { background: var(--surface2); border-radius: 8px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .total-lbl { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 2px; }
+    .total-detail { font-size: 0.75rem; color: var(--text-dim); margin-top: 2px; }
+    .total-amount { font-family: 'Barlow Condensed', sans-serif; font-weight: 800; font-size: 2rem; letter-spacing: -1px; color: var(--success); white-space: nowrap; }
+    .total-amount.muted { font-size: 0.9rem; font-weight: 400; color: var(--text-dim); letter-spacing: 0; }
+
+    .save-flash { text-align: center; font-size: 0.78rem; color: var(--success); margin-top: 10px; opacity: 0; transition: opacity 0.3s; }
+    .save-flash.show { opacity: 1; }
+
+    /* ── HISTORY ── */
+    .section-head { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 12px; }
+    .hist-list { display: flex; flex-direction: column; gap: 8px; }
+    .hist-item {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+      padding: 13px 18px; display: flex; justify-content: space-between; align-items: center; gap: 12px;
+      animation: fadeUp 0.3s ease both;
+    }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+    .hist-period { font-size: 0.88rem; font-weight: 500; }
+    .hist-hours  { font-size: 0.74rem; color: var(--text-dim); margin-top: 2px; }
+    .hist-total  { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 1.15rem; white-space: nowrap; }
+    .hist-total.muted { font-size: 0.8rem; font-weight: 400; font-family: 'Barlow', sans-serif; color: var(--text-dim); }
+    .empty-hist { text-align: center; color: var(--text-dim); font-size: 0.82rem; padding: 28px; }
+
+    /* ── FAB ── */
+    .fab {
+      position: fixed; bottom: 24px; right: 24px; background: var(--accent); color: #000; border: none;
+      border-radius: 50%; width: 52px; height: 52px; font-size: 1.3rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 20px rgba(232,160,32,0.35); transition: transform 0.2s;
+    }
+    .fab:hover { transform: scale(1.07); }
+
+    /* ── MODAL ── */
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: flex; align-items: center; justify-content: center; padding: 24px; z-index: 100; }
+    .modal { background: var(--surface); border: 1px solid var(--border2); border-radius: 12px; padding: 26px; width: 100%; max-width: 360px; }
+    .modal-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 1.25rem; margin-bottom: 4px; }
+    .modal-sub   { font-size: 0.78rem; color: var(--text-dim); margin-bottom: 22px; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 18px; }
+    .modal-actions .btn-primary { flex: 1; margin: 0; }
+    .btn-cancel {
+      flex: 1; background: none; border: 1px solid var(--border2); color: var(--text-mid); border-radius: 6px; padding: 13px;
+      font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 1rem;
+      letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-cancel:hover { border-color: var(--text-mid); color: var(--text); }
+    .rate-hint { font-size: 0.75rem; color: var(--text-dim); margin-top: 6px; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════ LOGIN ═══════════════ -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="brand">HORA<em>LOG</em></div>
+    <div class="brand-sub">Control de horas · Facturación</div>
+
+    <div class="tab-row">
+      <button class="tab-btn active" id="tab-login" onclick="switchTab('login')">Ingresar</button>
+      <button class="tab-btn"        id="tab-reg"   onclick="switchTab('reg')">Registrarse</button>
+    </div>
+
+    <div id="form-login">
+      <div class="field"><label>Usuario</label>
+        <input type="text" id="l-user" placeholder="tunombre" autocomplete="username"
+               onkeydown="if(event.key==='Enter')doLogin()" /></div>
+      <div class="field"><label>Contraseña</label>
+        <input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password"
+               onkeydown="if(event.key==='Enter')doLogin()" /></div>
+      <button class="btn-primary" id="btn-login" onclick="doLogin()">Ingresar</button>
+      <div id="l-err" class="err-box hidden"></div>
+    </div>
+
+    <div id="form-reg" class="hidden">
+      <div class="field"><label>Usuario</label>
+        <input type="text" id="r-user" placeholder="tunombre (sin espacios)" autocomplete="username" /></div>
+      <div class="field"><label>Contraseña</label>
+        <input type="password" id="r-pass" placeholder="Mínimo 6 caracteres" autocomplete="new-password" /></div>
+      <button class="btn-primary" onclick="doRegister()">Crear cuenta</button>
+      <div id="r-err" class="err-box hidden"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ APP ═══════════════ -->
+<div id="app-screen" class="hidden">
+  <div class="topbar">
+    <div class="brand">HORA<em>LOG</em></div>
+    <div class="topbar-right">
+      <span class="topbar-user" id="disp-name"></span>
+      <button class="btn-sm" onclick="openPassModal()">Cambiar clave</button>
+      <button class="btn-sm" onclick="doLogout()">Salir</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div id="spinner" class="spinner">Cargando…</div>
+    <div id="main" class="hidden">
+      <div class="period-card">
+        <div class="period-card-header">
+          <div class="period-tag">Período actual</div>
+          <div class="period-name" id="cur-period-label"></div>
+        </div>
+        <div class="period-card-body">
+          <div class="cap-notice hidden" id="cap-notice">⚠ Máximo facturable: 100 hs. Las horas extra no se cobran.</div>
+          <div class="hours-row">
+            <div class="hours-wrap">
+              <input type="number" id="hours-input" min="0" max="9999" placeholder="0" oninput="onHoursChange()" />
+              <span class="hours-unit">HS</span>
+            </div>
+            <button class="btn-save" id="btn-save" onclick="saveHours()">Guardar</button>
+          </div>
+          <div class="total-row">
+            <div>
+              <div class="total-lbl">A cobrar</div>
+              <div class="total-detail" id="total-detail"></div>
+            </div>
+            <div class="total-amount muted" id="total-amount">—</div>
+          </div>
+          <div class="save-flash" id="save-flash">✓ Guardado correctamente</div>
+        </div>
+      </div>
+
+      <div class="section-head">Historial de períodos</div>
+      <div class="hist-list" id="hist-list"><div class="empty-hist">Sin períodos anteriores</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- Admin FAB -->
+<button class="fab hidden" id="admin-fab" onclick="openRateModal()" title="Configurar tarifa">⚙</button>
+
+<!-- Rate modal -->
+<div class="overlay hidden" id="rate-modal">
+  <div class="modal">
+    <div class="modal-title">Tarifa del período</div>
+    <div class="modal-sub" id="rate-modal-sub"></div>
+    <div class="field"><label>Valor de la hora (ARS)</label>
+      <input type="number" id="rate-input" placeholder="Ej: 8000" min="1" /></div>
+    <div class="rate-hint" id="rate-hint"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeRateModal()">Cancelar</button>
+      <button class="btn-primary" onclick="saveRate()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Change password modal -->
+<div class="overlay hidden" id="pass-modal">
+  <div class="modal">
+    <div class="modal-title">Cambiar contraseña</div>
+    <div class="modal-sub">Ingresá tu contraseña actual y la nueva.</div>
+    <div class="field"><label>Contraseña actual</label>
+      <input type="password" id="p-current" placeholder="••••••••" autocomplete="current-password" /></div>
+    <div class="field"><label>Nueva contraseña</label>
+      <input type="password" id="p-new" placeholder="Mínimo 6 caracteres" autocomplete="new-password" /></div>
+    <div class="field"><label>Repetir nueva contraseña</label>
+      <input type="password" id="p-new2" placeholder="••••••••" /></div>
+    <div id="p-err" class="err-box hidden"></div>
+    <div id="p-ok"  class="ok-box  hidden">✓ Contraseña actualizada correctamente</div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closePassModal()">Cerrar</button>
+      <button class="btn-primary" id="btn-chpass" onclick="changePass()">Actualizar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════
+   CONFIGURACIÓN — REEMPLAZAR CON TUS DATOS
+   ══════════════════════════════════════════ */
+const FIREBASE_CONFIG = {
+  apiKey:            "TU_API_KEY",
+  authDomain:        "TU_AUTH_DOMAIN",
+  projectId:         "TU_PROJECT_ID",
+  storageBucket:     "TU_STORAGE_BUCKET",
+  messagingSenderId: "TU_SENDER_ID",
+  appId:             "TU_APP_ID"
+};
+const ADMIN_USER = "hugo";       // Usuario con acceso a fijar tarifas
+const DOMAIN     = "horalog.app"; // Dominio interno (no necesita existir)
+const MAX_HOURS  = 100;
+/* ════════════════════════════════════════ */
+
+firebase.initializeApp(FIREBASE_CONFIG);
+const auth = firebase.auth();
+const db   = firebase.firestore();
+
+let me = null, isAdmin = false, curPeriodId = null, curRate = null;
+
+function toEmail(u) { return `${u.trim().toLowerCase()}@${DOMAIN}`; }
+
+// ── AUTH ──────────────────────────────────────────────────────────────
+auth.onAuthStateChanged(user => {
+  if (user) { me = user; isAdmin = user.displayName === ADMIN_USER; goApp(); }
+  else      { me = null; isAdmin = false; goLogin(); }
+});
+
+function goLogin() { show('login-screen'); hide('app-screen'); hide('admin-fab'); }
+
+async function goApp() {
+  hide('login-screen'); show('app-screen');
+  document.getElementById('disp-name').textContent = me.displayName || '—';
+  if (isAdmin) show('admin-fab');
+  await loadAll();
+}
+
+// ── PERIODS ───────────────────────────────────────────────────────────
+function getPeriodId() {
+  const d = new Date();
+  let y = d.getFullYear(), m = d.getMonth();
+  if (d.getDate() < 16) { m === 0 ? (m = 11, y--) : m--; }
+  return `${y}-${String(m + 1).padStart(2, '0')}`;
+}
+
+function periodLabel(id) {
+  const [y, m] = id.split('-').map(Number);
+  const MO = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const nm = m % 12 + 1, ny = m === 12 ? y + 1 : y;
+  return `16 ${MO[m-1]} – 15 ${MO[nm-1]} ${ny}`;
+}
+
+function ars(n) {
+  return new Intl.NumberFormat('es-AR', { style:'currency', currency:'ARS', minimumFractionDigits:0 }).format(n);
+}
+
+// ── LOAD ──────────────────────────────────────────────────────────────
+async function loadAll() {
+  show('spinner'); hide('main');
+  curPeriodId = getPeriodId();
+  document.getElementById('cur-period-label').textContent = periodLabel(curPeriodId);
+
+  try { const s = await db.collection('rates').doc(curPeriodId).get(); curRate = s.exists ? s.data().rate : null; }
+  catch { curRate = null; }
+
+  try {
+    const s = await db.collection('hours').doc(me.uid).collection('periods').doc(curPeriodId).get();
+    if (s.exists) { document.getElementById('hours-input').value = s.data().hours; onHoursChange(); }
+  } catch {}
+
+  try {
+    const snap = await db.collection('hours').doc(me.uid).collection('periods')
+      .orderBy(firebase.firestore.FieldPath.documentId(), 'desc').get();
+    const past = snap.docs.filter(d => d.id !== curPeriodId);
+
+    if (!past.length) {
+      document.getElementById('hist-list').innerHTML = '<div class="empty-hist">Sin períodos anteriores</div>';
+    } else {
+      const rSnaps = await Promise.all(past.map(d => db.collection('rates').doc(d.id).get()));
+      document.getElementById('hist-list').innerHTML = past.map((doc, i) => {
+        const hrs  = doc.data().hours;
+        const bill = Math.min(hrs, MAX_HOURS);
+        const rate = rSnaps[i].exists ? rSnaps[i].data().rate : null;
+        const tot  = rate != null ? bill * rate : null;
+        return `<div class="hist-item" style="animation-delay:${i*0.04}s">
+          <div>
+            <div class="hist-period">${periodLabel(doc.id)}</div>
+            <div class="hist-hours">${hrs} hs registradas · ${bill} hs facturables</div>
+          </div>
+          <div class="hist-total ${tot!=null?'':'muted'}">${tot!=null ? ars(tot) : 'Sin tarifa'}</div>
+        </div>`;
+      }).join('');
+    }
+  } catch(e) { console.error(e); }
+
+  if (isAdmin) {
+    document.getElementById('rate-modal-sub').textContent = periodLabel(curPeriodId);
+    document.getElementById('rate-hint').textContent =
+      curRate ? `Tarifa actual: ${ars(curRate)}/hs` : 'Sin tarifa definida para este período.';
+  }
+
+  hide('spinner'); show('main');
+}
+
+// ── HOURS ─────────────────────────────────────────────────────────────
+function onHoursChange() {
+  const raw  = parseFloat(document.getElementById('hours-input').value) || 0;
+  const bill = Math.min(raw, MAX_HOURS);
+  raw > MAX_HOURS ? show('cap-notice') : hide('cap-notice');
+  const amtEl = document.getElementById('total-amount');
+  const detEl = document.getElementById('total-detail');
+  if (!curRate) {
+    amtEl.textContent = '—'; amtEl.className = 'total-amount muted'; detEl.textContent = 'Tarifa no definida aún';
+  } else if (raw === 0) {
+    amtEl.textContent = ars(0); amtEl.className = 'total-amount'; detEl.textContent = '';
+  } else {
+    amtEl.textContent = ars(bill * curRate); amtEl.className = 'total-amount';
+    detEl.textContent = `${bill} hs × ${ars(curRate)}/hs`;
+  }
+}
+
+async function saveHours() {
+  const hours = parseFloat(document.getElementById('hours-input').value);
+  if (isNaN(hours) || hours < 0) return;
+  const btn = document.getElementById('btn-save');
+  btn.disabled = true; btn.textContent = '…';
+  try {
+    await db.collection('hours').doc(me.uid).collection('periods').doc(curPeriodId)
+      .set({ hours, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+    const fl = document.getElementById('save-flash');
+    fl.classList.add('show'); setTimeout(() => fl.classList.remove('show'), 2200);
+  } catch { alert('Error al guardar. Intentá de nuevo.'); }
+  btn.disabled = false; btn.textContent = 'Guardar';
+}
+
+// ── TARIFA (admin) ────────────────────────────────────────────────────
+function openRateModal()  { if (curRate) document.getElementById('rate-input').value = curRate; show('rate-modal'); }
+function closeRateModal() { hide('rate-modal'); }
+
+async function saveRate() {
+  const rate = parseFloat(document.getElementById('rate-input').value);
+  if (!rate || rate <= 0) { alert('Ingresá un valor válido.'); return; }
+  try {
+    await db.collection('rates').doc(curPeriodId)
+      .set({ rate, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+    curRate = rate;
+    document.getElementById('rate-hint').textContent = `Tarifa actual: ${ars(rate)}/hs`;
+    onHoursChange(); closeRateModal();
+  } catch { alert('Error al guardar la tarifa.'); }
+}
+
+// ── CAMBIAR CONTRASEÑA ────────────────────────────────────────────────
+function openPassModal() {
+  ['p-current','p-new','p-new2'].forEach(id => document.getElementById(id).value = '');
+  hide('p-err'); hide('p-ok'); show('pass-modal');
+}
+function closePassModal() { hide('pass-modal'); }
+
+async function changePass() {
+  const current = document.getElementById('p-current').value;
+  const nuevo   = document.getElementById('p-new').value;
+  const nuevo2  = document.getElementById('p-new2').value;
+  const errEl   = document.getElementById('p-err');
+  const okEl    = document.getElementById('p-ok');
+  const btn     = document.getElementById('btn-chpass');
+  hide(errEl); hide(okEl);
+  if (!current || !nuevo || !nuevo2) { showErr(errEl, 'Completá todos los campos.'); return; }
+  if (nuevo !== nuevo2)              { showErr(errEl, 'Las contraseñas nuevas no coinciden.'); return; }
+  if (nuevo.length < 6)              { showErr(errEl, 'La nueva contraseña debe tener al menos 6 caracteres.'); return; }
+  btn.disabled = true;
+  try {
+    const cred = firebase.auth.EmailAuthProvider.credential(me.email, current);
+    await me.reauthenticateWithCredential(cred);
+    await me.updatePassword(nuevo);
+    show(okEl);
+    ['p-current','p-new','p-new2'].forEach(id => document.getElementById(id).value = '');
+  } catch(e) {
+    showErr(errEl,
+      ['auth/wrong-password','auth/invalid-credential'].includes(e.code)
+        ? 'La contraseña actual es incorrecta.'
+        : 'Error al actualizar. Intentá de nuevo.');
+  }
+  btn.disabled = false;
+}
+
+// ── LOGIN / REGISTER ──────────────────────────────────────────────────
+function switchTab(t) {
+  const isL = t === 'login';
+  document.getElementById('tab-login').classList.toggle('active',  isL);
+  document.getElementById('tab-reg').classList.toggle('active',   !isL);
+  document.getElementById('form-login').classList.toggle('hidden', !isL);
+  document.getElementById('form-reg').classList.toggle('hidden',   isL);
+}
+
+async function doLogin() {
+  const user = document.getElementById('l-user').value.trim().toLowerCase();
+  const pass = document.getElementById('l-pass').value;
+  const errEl = document.getElementById('l-err');
+  const btn   = document.getElementById('btn-login');
+  hide(errEl); btn.disabled = true;
+  try { await auth.signInWithEmailAndPassword(toEmail(user), pass); }
+  catch(e) {
+    showErr(errEl,
+      ['auth/invalid-credential','auth/wrong-password','auth/user-not-found'].includes(e.code)
+        ? 'Usuario o contraseña incorrectos.' : 'Error al ingresar. Intentá de nuevo.');
+    btn.disabled = false;
+  }
+}
+
+async function doRegister() {
+  const user = document.getElementById('r-user').value.trim().toLowerCase();
+  const pass = document.getElementById('r-pass').value;
+  const errEl = document.getElementById('r-err');
+  hide(errEl);
+  if (!user || !pass)   { showErr(errEl, 'Completá todos los campos.'); return; }
+  if (/\s/.test(user))  { showErr(errEl, 'El usuario no puede tener espacios.'); return; }
+  if (pass.length < 6)  { showErr(errEl, 'La contraseña debe tener al menos 6 caracteres.'); return; }
+  try {
+    const cred = await auth.createUserWithEmailAndPassword(toEmail(user), pass);
+    await cred.user.updateProfile({ displayName: user });
+  } catch(e) {
+    showErr(errEl,
+      e.code === 'auth/email-already-in-use' ? 'El usuario ya existe.' :
+      e.code === 'auth/weak-password'        ? 'Contraseña muy corta (mínimo 6 caracteres).' :
+      'Error al registrar. Intentá de nuevo.');
+  }
+}
+
+function doLogout() { auth.signOut(); }
+
+// ── HELPERS ───────────────────────────────────────────────────────────
+function show(el) { (typeof el==='string'?document.getElementById(el):el).classList.remove('hidden'); }
+function hide(el) { (typeof el==='string'?document.getElementById(el):el).classList.add('hidden'); }
+function showErr(el, msg) { el.textContent = msg; show(el); }
+</script>
+</body>
+</html>
