@@ -282,21 +282,18 @@
 </div>
 
 <script>
-/* ══════════════════════════════════════════
-   CONFIGURACIÓN — REEMPLAZAR CON TUS DATOS
-   ══════════════════════════════════════════ */
 const FIREBASE_CONFIG = {
-  apiKey:            "TU_API_KEY",
-  authDomain:        "TU_AUTH_DOMAIN",
-  projectId:         "TU_PROJECT_ID",
-  storageBucket:     "TU_STORAGE_BUCKET",
-  messagingSenderId: "TU_SENDER_ID",
-  appId:             "TU_APP_ID"
+  apiKey:            "AIzaSyCV8yJ24meEnz3MH2x8YfYxfEGzbhldMPA",
+  authDomain:        "control-de-horas-d0b0e.firebaseapp.com",
+  projectId:         "control-de-horas-d0b0e",
+  storageBucket:     "control-de-horas-d0b0e.firebasestorage.app",
+  messagingSenderId: "759307774178",
+  appId:             "1:759307774178:web:7bf13ccbe49fe371d216bb"
 };
-const ADMIN_USER = "hugo";       // Usuario con acceso a fijar tarifas
-const DOMAIN     = "horalog.app"; // Dominio interno (no necesita existir)
+
+const ADMIN_USER = "hugo";
+const DOMAIN     = "horalog.app";
 const MAX_HOURS  = 100;
-/* ════════════════════════════════════════ */
 
 firebase.initializeApp(FIREBASE_CONFIG);
 const auth = firebase.auth();
@@ -306,7 +303,6 @@ let me = null, isAdmin = false, curPeriodId = null, curRate = null;
 
 function toEmail(u) { return `${u.trim().toLowerCase()}@${DOMAIN}`; }
 
-// ── AUTH ──────────────────────────────────────────────────────────────
 auth.onAuthStateChanged(user => {
   if (user) { me = user; isAdmin = user.displayName === ADMIN_USER; goApp(); }
   else      { me = null; isAdmin = false; goLogin(); }
@@ -321,7 +317,6 @@ async function goApp() {
   await loadAll();
 }
 
-// ── PERIODS ───────────────────────────────────────────────────────────
 function getPeriodId() {
   const d = new Date();
   let y = d.getFullYear(), m = d.getMonth();
@@ -340,7 +335,6 @@ function ars(n) {
   return new Intl.NumberFormat('es-AR', { style:'currency', currency:'ARS', minimumFractionDigits:0 }).format(n);
 }
 
-// ── LOAD ──────────────────────────────────────────────────────────────
 async function loadAll() {
   show('spinner'); hide('main');
   curPeriodId = getPeriodId();
@@ -388,7 +382,6 @@ async function loadAll() {
   hide('spinner'); show('main');
 }
 
-// ── HOURS ─────────────────────────────────────────────────────────────
 function onHoursChange() {
   const raw  = parseFloat(document.getElementById('hours-input').value) || 0;
   const bill = Math.min(raw, MAX_HOURS);
@@ -419,7 +412,6 @@ async function saveHours() {
   btn.disabled = false; btn.textContent = 'Guardar';
 }
 
-// ── TARIFA (admin) ────────────────────────────────────────────────────
 function openRateModal()  { if (curRate) document.getElementById('rate-input').value = curRate; show('rate-modal'); }
 function closeRateModal() { hide('rate-modal'); }
 
@@ -435,7 +427,6 @@ async function saveRate() {
   } catch { alert('Error al guardar la tarifa.'); }
 }
 
-// ── CAMBIAR CONTRASEÑA ────────────────────────────────────────────────
 function openPassModal() {
   ['p-current','p-new','p-new2'].forEach(id => document.getElementById(id).value = '');
   hide('p-err'); hide('p-ok'); show('pass-modal');
@@ -469,7 +460,6 @@ async function changePass() {
   btn.disabled = false;
 }
 
-// ── LOGIN / REGISTER ──────────────────────────────────────────────────
 function switchTab(t) {
   const isL = t === 'login';
   document.getElementById('tab-login').classList.toggle('active',  isL);
@@ -514,7 +504,6 @@ async function doRegister() {
 
 function doLogout() { auth.signOut(); }
 
-// ── HELPERS ───────────────────────────────────────────────────────────
 function show(el) { (typeof el==='string'?document.getElementById(el):el).classList.remove('hidden'); }
 function hide(el) { (typeof el==='string'?document.getElementById(el):el).classList.add('hidden'); }
 function showErr(el, msg) { el.textContent = msg; show(el); }
