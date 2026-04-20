@@ -9,161 +9,160 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
   <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg:#0c0c0c; --surface:#151515; --surface2:#1c1c1c; --surface3:#222;
-      --border:#272727; --border2:#333; --accent:#e8a020; --accent-dim:rgba(232,160,32,0.12);
-      --text:#ededed; --text-dim:#777; --text-mid:#aaa; --success:#3ec66b; --danger:#e85050;
-    }
-    body { font-family:'Barlow',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
-    .hidden { display:none !important; }
-
-    /* LOGIN */
-    #login-screen {
-      min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px;
-      background:radial-gradient(ellipse 60% 60% at 15% 50%,rgba(232,160,32,0.06) 0%,transparent 70%),var(--bg);
-    }
-    .login-box { width:100%; max-width:360px; }
-    .brand { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:3rem; letter-spacing:-2px; line-height:1; margin-bottom:6px; }
-    .brand em { color:var(--accent); font-style:normal; }
-    .brand-sub { color:var(--text-dim); font-size:0.78rem; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:44px; }
-    .tab-row { display:flex; border-bottom:1px solid var(--border); margin-bottom:28px; }
-    .tab-btn { background:none; border:none; color:var(--text-dim); font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:0.85rem; letter-spacing:0.1em; text-transform:uppercase; padding:8px 0; margin-right:24px; cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-1px; transition:color .2s,border-color .2s; }
-    .tab-btn.active { color:var(--accent); border-bottom-color:var(--accent); }
-    .field { margin-bottom:14px; }
-    .field label { display:block; font-size:0.68rem; font-weight:600; letter-spacing:0.12em; text-transform:uppercase; color:var(--text-dim); margin-bottom:6px; }
-    .field input { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:11px 14px; color:var(--text); font-family:'Barlow',sans-serif; font-size:0.95rem; outline:none; transition:border-color .2s; }
-    .field input:focus { border-color:var(--accent); }
-    .btn-primary { width:100%; background:var(--accent); color:#000; border:none; border-radius:6px; padding:13px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:1rem; letter-spacing:0.06em; text-transform:uppercase; cursor:pointer; margin-top:6px; transition:opacity .2s; }
-    .btn-primary:hover { opacity:.85; }
-    .btn-primary:disabled { opacity:.35; cursor:default; }
-    .err-box { background:rgba(232,80,80,.1); border:1px solid rgba(232,80,80,.3); color:#f7a0a0; border-radius:6px; padding:10px 14px; font-size:0.82rem; margin-top:12px; }
-    .ok-box  { background:rgba(62,198,107,.1); border:1px solid rgba(62,198,107,.3); color:#86efac; border-radius:6px; padding:10px 14px; font-size:0.82rem; margin-top:12px; }
-
-    /* TOPBAR */
-    #app-screen { min-height:100vh; }
-    .topbar { background:var(--surface); border-bottom:1px solid var(--border); padding:13px 20px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:20; }
-    .topbar .brand { font-size:1.5rem; margin:0; letter-spacing:-1px; }
-    .topbar-right { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-    .topbar-user { font-size:0.8rem; color:var(--text-mid); }
-    .btn-sm { background:none; border:1px solid var(--border); color:var(--text-dim); padding:5px 12px; border-radius:4px; font-family:'Barlow',sans-serif; font-size:0.78rem; cursor:pointer; transition:all .2s; }
-    .btn-sm:hover { border-color:var(--accent); color:var(--accent); }
-
-    /* CONTENT */
-    .content { max-width:600px; margin:0 auto; padding:28px 18px 80px; }
-    .spinner { text-align:center; color:var(--text-dim); font-size:0.85rem; padding:60px 0; }
-
-    /* TARIFA CARD */
-    .rate-info-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:18px 22px; margin-bottom:24px; }
-    .rate-info-title { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:0.78rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--accent); margin-bottom:12px; }
-    .rate-formula { font-size:0.8rem; color:var(--text-dim); margin-bottom:10px; }
-    .rate-formula span { color:var(--text-mid); }
-    .rate-value { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:1.8rem; letter-spacing:-0.5px; color:var(--success); }
-    .rate-value.muted { font-size:1rem; font-weight:400; color:var(--text-dim); letter-spacing:0; }
-    .rate-eb-row { display:flex; gap:12px; margin-top:10px; }
-    .rate-eb-item { flex:1; background:var(--surface2); border-radius:8px; padding:10px 14px; }
-    .rate-eb-lbl { font-size:0.65rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-dim); margin-bottom:4px; }
-    .rate-eb-val { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:1.1rem; }
-    .rate-eb-val.muted { font-size:0.85rem; font-weight:400; color:var(--text-dim); }
-
-    /* PERIOD CARD */
-    .period-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; margin-bottom:28px; }
-    .period-card-header { padding:18px 22px 14px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:flex-start; }
-    .period-tag { font-family:'Barlow Condensed',sans-serif; font-size:0.68rem; font-weight:700; letter-spacing:0.15em; text-transform:uppercase; color:var(--accent); margin-bottom:4px; }
-    .period-name { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:1.4rem; letter-spacing:-0.3px; }
-    .period-total-badge { text-align:right; }
-    .period-total-lbl { font-size:0.65rem; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:2px; }
-    .period-total-val { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:1.5rem; color:var(--success); }
-    .period-total-val.muted { font-size:0.9rem; font-weight:400; color:var(--text-dim); }
-
-    .period-card-body { padding:18px 22px; }
-
-    /* DAYS GRID */
-    .days-section-label { font-size:0.68rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-dim); margin-bottom:10px; }
-    .days-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(72px,1fr)); gap:8px; margin-bottom:16px; }
-    .day-cell { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:8px 6px; text-align:center; }
-    .day-cell.weekend { opacity:.55; }
-    .day-lbl { font-size:0.62rem; color:var(--text-dim); margin-bottom:4px; }
-    .day-input { width:100%; background:none; border:none; color:var(--text); font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:1.1rem; text-align:center; outline:none; }
-    .day-input::placeholder { color:var(--border2); }
-    .day-input:focus { color:var(--accent); }
-
-    .cap-notice { background:var(--accent-dim); border:1px solid rgba(232,160,32,.25); border-radius:6px; padding:8px 12px; font-size:0.78rem; color:var(--accent); margin-bottom:14px; }
-
-    .summary-row { background:var(--surface2); border-radius:8px; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:12px; }
-    .sum-lbl { font-size:0.68rem; font-weight:600; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-dim); margin-bottom:2px; }
-    .sum-detail { font-size:0.75rem; color:var(--text-dim); margin-top:2px; }
-    .sum-val { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:2rem; letter-spacing:-1px; color:var(--success); white-space:nowrap; }
-    .sum-val.muted { font-size:0.9rem; font-weight:400; color:var(--text-dim); letter-spacing:0; }
-
-    .btn-save-days { width:100%; background:var(--accent); color:#000; border:none; border-radius:8px; padding:13px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:1rem; letter-spacing:0.06em; text-transform:uppercase; cursor:pointer; transition:opacity .2s; }
-    .btn-save-days:hover { opacity:.85; }
-    .btn-save-days:disabled { opacity:.35; cursor:default; }
-    .save-flash { text-align:center; font-size:0.78rem; color:var(--success); margin-top:10px; opacity:0; transition:opacity .3s; }
-    .save-flash.show { opacity:1; }
-
-    /* HISTORY */
-    .section-head { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:0.78rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--text-dim); margin-bottom:12px; }
-    .hist-list { display:flex; flex-direction:column; gap:8px; }
-    .hist-item { background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:13px 18px; display:flex; justify-content:space-between; align-items:center; gap:12px; animation:fadeUp .3s ease both; }
-    @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
-    .hist-period { font-size:0.88rem; font-weight:500; }
-    .hist-hours  { font-size:0.74rem; color:var(--text-dim); margin-top:2px; }
-    .hist-total  { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:1.15rem; white-space:nowrap; }
-    .hist-total.muted { font-size:0.8rem; font-weight:400; font-family:'Barlow',sans-serif; color:var(--text-dim); }
-    .empty-hist { text-align:center; color:var(--text-dim); font-size:0.82rem; padding:28px; }
-
-    /* FAB */
-    .fab { position:fixed; bottom:24px; right:24px; background:var(--accent); color:#000; border:none; border-radius:50%; width:52px; height:52px; font-size:1.3rem; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 20px rgba(232,160,32,.35); transition:transform .2s; }
-    .fab:hover { transform:scale(1.07); }
-
-    /* MODAL */
-    .overlay { position:fixed; inset:0; background:rgba(0,0,0,.75); display:flex; align-items:center; justify-content:center; padding:24px; z-index:100; }
-    .modal { background:var(--surface); border:1px solid var(--border2); border-radius:12px; padding:26px; width:100%; max-width:380px; }
-    .modal-title { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:1.25rem; margin-bottom:4px; }
-    .modal-sub   { font-size:0.78rem; color:var(--text-dim); margin-bottom:22px; }
-    .modal-actions { display:flex; gap:10px; margin-top:18px; }
-    .modal-actions .btn-primary { flex:1; margin:0; }
-    .btn-cancel { flex:1; background:none; border:1px solid var(--border2); color:var(--text-mid); border-radius:6px; padding:13px; font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:1rem; letter-spacing:0.06em; text-transform:uppercase; cursor:pointer; transition:border-color .2s,color .2s; }
-    .btn-cancel:hover { border-color:var(--text-mid); color:var(--text); }
-    .formula-box { background:var(--surface2); border-radius:8px; padding:12px 14px; font-size:0.8rem; color:var(--text-mid); margin-bottom:16px; line-height:1.6; }
-    .formula-box strong { color:var(--accent); }
-    .eb-fields { display:flex; gap:10px; }
-    .eb-fields .field { flex:1; }
-    .modal-hint { font-size:0.75rem; color:var(--text-dim); margin-top:6px; }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{--bg:#0c0c0c;--surface:#151515;--surface2:#1c1c1c;--border:#272727;--border2:#333;--accent:#e8a020;--accent-dim:rgba(232,160,32,0.12);--text:#ededed;--text-dim:#777;--text-mid:#aaa;--success:#3ec66b;--danger:#e85050}
+    body{font-family:'Barlow',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+    .hidden{display:none!important}
+    #login-screen{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;background:radial-gradient(ellipse 60% 60% at 15% 50%,rgba(232,160,32,0.06) 0%,transparent 70%),var(--bg)}
+    .login-box{width:100%;max-width:360px}
+    .brand{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:3rem;letter-spacing:-2px;line-height:1;margin-bottom:6px}
+    .brand em{color:var(--accent);font-style:normal}
+    .brand-sub{color:var(--text-dim);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:44px}
+    .tab-row{display:flex;border-bottom:1px solid var(--border);margin-bottom:28px}
+    .tab-btn{background:none;border:none;color:var(--text-dim);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.85rem;letter-spacing:.1em;text-transform:uppercase;padding:8px 0;margin-right:24px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .2s,border-color .2s}
+    .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+    .field{margin-bottom:14px}
+    .field label{display:block;font-size:.68rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px}
+    .field input,.field select{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:11px 14px;color:var(--text);font-family:'Barlow',sans-serif;font-size:.95rem;outline:none;transition:border-color .2s}
+    .field input:focus,.field select:focus{border-color:var(--accent)}
+    .field select option{background:var(--surface2)}
+    .btn-primary{width:100%;background:var(--accent);color:#000;border:none;border-radius:6px;padding:13px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;margin-top:6px;transition:opacity .2s}
+    .btn-primary:hover{opacity:.85}
+    .btn-primary:disabled{opacity:.35;cursor:default}
+    .err-box{background:rgba(232,80,80,.1);border:1px solid rgba(232,80,80,.3);color:#f7a0a0;border-radius:6px;padding:10px 14px;font-size:.82rem;margin-top:12px}
+    .ok-box{background:rgba(62,198,107,.1);border:1px solid rgba(62,198,107,.3);color:#86efac;border-radius:6px;padding:10px 14px;font-size:.82rem;margin-top:12px}
+    #app-screen{min-height:100vh}
+    .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:13px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:20}
+    .topbar .brand{font-size:1.5rem;margin:0;letter-spacing:-1px}
+    .topbar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .topbar-user{font-size:.8rem;color:var(--text-mid)}
+    .btn-sm{background:none;border:1px solid var(--border);color:var(--text-dim);padding:5px 12px;border-radius:4px;font-family:'Barlow',sans-serif;font-size:.78rem;cursor:pointer;transition:all .2s}
+    .btn-sm:hover{border-color:var(--accent);color:var(--accent)}
+    .content{max-width:620px;margin:0 auto;padding:28px 18px 100px}
+    .spinner{text-align:center;color:var(--text-dim);font-size:.85rem;padding:60px 0}
+    .cobro-banner{background:linear-gradient(135deg,rgba(232,160,32,.15),rgba(232,160,32,.05));border:1px solid rgba(232,160,32,.4);border-radius:12px;padding:20px 22px;margin-bottom:24px;animation:fadeUp .4s ease}
+    .cobro-banner-tag{font-family:'Barlow Condensed',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);margin-bottom:6px}
+    .cobro-banner-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1.3rem;margin-bottom:4px}
+    .cobro-banner-sub{font-size:.82rem;color:var(--text-mid);margin-bottom:14px}
+    .cobro-banner-amount{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:2rem;letter-spacing:-1px;color:var(--success)}
+    .cobro-banner-detail{font-size:.75rem;color:var(--text-dim);margin-bottom:16px}
+    .cobro-banner-actions{display:flex;gap:10px}
+    .btn-cobro-si{flex:1;background:var(--success);color:#000;border:none;border-radius:8px;padding:12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.9rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:opacity .2s}
+    .btn-cobro-si:hover{opacity:.85}
+    .btn-cobro-no{flex:1;background:none;border:1px solid var(--border2);color:var(--text-mid);border-radius:8px;padding:12px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.9rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:all .2s}
+    .btn-cobro-no:hover{border-color:var(--danger);color:var(--danger)}
+    .rate-info-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:18px 22px;margin-bottom:24px}
+    .rate-info-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+    .rate-formula{font-size:.78rem;color:var(--text-dim);margin-bottom:10px}
+    .rate-formula span{color:var(--text-mid)}
+    .rate-eb-row{display:flex;gap:10px;margin-top:10px}
+    .rate-eb-item{flex:1;background:var(--surface2);border-radius:8px;padding:10px 14px}
+    .rate-eb-lbl{font-size:.62rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:4px}
+    .rate-eb-val{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1.05rem}
+    .rate-eb-val.muted{font-size:.85rem;font-weight:400;color:var(--text-dim)}
+    .rate-value{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.8rem;letter-spacing:-.5px;color:var(--success);margin-top:10px}
+    .rate-value.muted{font-size:1rem;font-weight:400;color:var(--text-dim);letter-spacing:0}
+    .period-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:28px}
+    .period-card-header{padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+    .period-tag{font-family:'Barlow Condensed',sans-serif;font-size:.68rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);margin-bottom:4px}
+    .period-name{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1.3rem;letter-spacing:-.3px}
+    .period-total-badge{text-align:right;flex-shrink:0}
+    .period-total-lbl{font-size:.62rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px}
+    .period-total-val{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.4rem;color:var(--success)}
+    .period-total-val.muted{font-size:.85rem;font-weight:400;color:var(--text-dim)}
+    .period-card-body{padding:18px 22px}
+    .days-section-label{font-size:.68rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px}
+    .days-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(68px,1fr));gap:7px;margin-bottom:16px}
+    .day-cell{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 5px;text-align:center}
+    .day-cell.weekend{opacity:.5}
+    .day-lbl{font-size:.6rem;color:var(--text-dim);margin-bottom:4px}
+    .day-input{width:100%;background:none;border:none;color:var(--text);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1.05rem;text-align:center;outline:none}
+    .day-input::placeholder{color:var(--border2)}
+    .day-input:focus{color:var(--accent)}
+    .cap-notice{background:var(--accent-dim);border:1px solid rgba(232,160,32,.25);border-radius:6px;padding:8px 12px;font-size:.78rem;color:var(--accent);margin-bottom:14px}
+    .summary-row{background:var(--surface2);border-radius:8px;padding:13px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}
+    .sum-lbl{font-size:.66rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:2px}
+    .sum-detail{font-size:.72rem;color:var(--text-dim);margin-top:2px}
+    .sum-val{font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:1.9rem;letter-spacing:-1px;color:var(--success);white-space:nowrap}
+    .sum-val.muted{font-size:.85rem;font-weight:400;color:var(--text-dim);letter-spacing:0}
+    .btn-save-days{width:100%;background:var(--accent);color:#000;border:none;border-radius:8px;padding:13px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:opacity .2s}
+    .btn-save-days:hover{opacity:.85}
+    .btn-save-days:disabled{opacity:.35;cursor:default}
+    .save-flash{text-align:center;font-size:.78rem;color:var(--success);margin-top:10px;opacity:0;transition:opacity .3s}
+    .save-flash.show{opacity:1}
+    .section-head{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim);margin-bottom:12px}
+    .hist-list{display:flex;flex-direction:column;gap:8px}
+    .hist-item{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:13px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px;animation:fadeUp .3s ease both}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+    .hist-left{flex:1;min-width:0}
+    .hist-period{font-size:.88rem;font-weight:500}
+    .hist-hours{font-size:.72rem;color:var(--text-dim);margin-top:2px}
+    .hist-right{text-align:right;flex-shrink:0}
+    .hist-total{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1.1rem;white-space:nowrap}
+    .hist-total.muted{font-size:.8rem;font-weight:400;font-family:'Barlow',sans-serif;color:var(--text-dim)}
+    .badge{display:inline-block;border-radius:4px;font-size:.62rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;margin-top:4px}
+    .badge-cobrado{background:rgba(62,198,107,.15);border:1px solid rgba(62,198,107,.3);color:#86efac}
+    .badge-pendiente{background:rgba(232,160,32,.12);border:1px solid rgba(232,160,32,.3);color:var(--accent)}
+    .empty-hist{text-align:center;color:var(--text-dim);font-size:.82rem;padding:28px}
+    .fab-group{position:fixed;bottom:24px;right:24px;display:flex;flex-direction:column;gap:10px;align-items:flex-end}
+    .fab{background:var(--accent);color:#000;border:none;border-radius:50%;width:52px;height:52px;font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(232,160,32,.35);transition:transform .2s}
+    .fab:hover{transform:scale(1.07)}
+    .fab-sm{width:42px;height:42px;font-size:1rem;background:var(--surface);border:1px solid var(--border2);color:var(--text-mid);box-shadow:0 2px 12px rgba(0,0,0,.4)}
+    .fab-sm:hover{border-color:var(--accent);color:var(--accent);transform:scale(1.05)}
+    .overlay{position:fixed;inset:0;background:rgba(0,0,0,.78);display:flex;align-items:center;justify-content:center;padding:20px;z-index:100;overflow-y:auto}
+    .modal{background:var(--surface);border:1px solid var(--border2);border-radius:12px;padding:26px;width:100%;max-width:420px}
+    .modal-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1.25rem;margin-bottom:4px}
+    .modal-sub{font-size:.78rem;color:var(--text-dim);margin-bottom:20px}
+    .modal-actions{display:flex;gap:10px;margin-top:18px}
+    .modal-actions .btn-primary{flex:1;margin:0}
+    .btn-cancel{flex:1;background:none;border:1px solid var(--border2);color:var(--text-mid);border-radius:6px;padding:13px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;transition:border-color .2s,color .2s}
+    .btn-cancel:hover{border-color:var(--text-mid);color:var(--text)}
+    .formula-box{background:var(--surface2);border-radius:8px;padding:12px 14px;font-size:.8rem;color:var(--text-mid);margin-bottom:16px;line-height:1.7}
+    .formula-box strong{color:var(--accent)}
+    .eb-fields{display:flex;gap:10px}
+    .eb-fields .field{flex:1}
+    .modal-hint{font-size:.75rem;color:var(--text-dim);margin-top:6px}
+    .cobro-opt{display:flex;gap:10px;margin-bottom:12px}
+    .cobro-opt-btn{flex:1;padding:10px;border-radius:8px;border:1px solid var(--border2);background:none;color:var(--text-mid);font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:.9rem;letter-spacing:.05em;text-transform:uppercase;cursor:pointer;transition:all .2s}
+    .cobro-opt-btn.selected{border-color:var(--accent);color:var(--accent);background:var(--accent-dim)}
+    .cobro-calc-info{background:var(--surface2);border-radius:8px;padding:10px 14px;font-size:.78rem;color:var(--text-mid);margin-bottom:14px}
+    .pp-year{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+    .pp-year-lbl{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:1.1rem}
+    .pp-arrow{background:none;border:1px solid var(--border2);color:var(--text-mid);border-radius:6px;padding:4px 12px;cursor:pointer;font-size:1rem;transition:all .2s}
+    .pp-arrow:hover{border-color:var(--accent);color:var(--accent)}
+    .period-picker-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .pp-btn{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 6px;text-align:center;cursor:pointer;transition:all .2s;font-size:.8rem;color:var(--text-mid)}
+    .pp-btn:hover:not(.disabled){border-color:var(--accent);color:var(--accent)}
+    .pp-btn.selected{border-color:var(--accent);background:var(--accent-dim);color:var(--accent);font-weight:600}
+    .pp-btn.disabled{opacity:.3;cursor:default}
+    .past-modal{max-width:520px}
   </style>
 </head>
 <body>
 
-<!-- LOGIN -->
 <div id="login-screen">
   <div class="login-box">
     <div class="brand">HORA<em>LOG</em></div>
     <div class="brand-sub">Control de horas · Facturación</div>
     <div class="tab-row">
       <button class="tab-btn active" id="tab-login" onclick="switchTab('login')">Ingresar</button>
-      <button class="tab-btn"        id="tab-reg"   onclick="switchTab('reg')">Registrarse</button>
+      <button class="tab-btn" id="tab-reg" onclick="switchTab('reg')">Registrarse</button>
     </div>
     <div id="form-login">
-      <div class="field"><label>Usuario</label>
-        <input type="text" id="l-user" placeholder="tunombre" autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()" /></div>
-      <div class="field"><label>Contraseña</label>
-        <input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" /></div>
+      <div class="field"><label>Usuario</label><input type="text" id="l-user" placeholder="tunombre" autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()"/></div>
+      <div class="field"><label>Contraseña</label><input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"/></div>
       <button class="btn-primary" id="btn-login" onclick="doLogin()">Ingresar</button>
       <div id="l-err" class="err-box hidden"></div>
     </div>
     <div id="form-reg" class="hidden">
-      <div class="field"><label>Usuario</label>
-        <input type="text" id="r-user" placeholder="tunombre (sin espacios)" autocomplete="username" /></div>
-      <div class="field"><label>Contraseña</label>
-        <input type="password" id="r-pass" placeholder="Mínimo 6 caracteres" autocomplete="new-password" /></div>
+      <div class="field"><label>Usuario</label><input type="text" id="r-user" placeholder="tunombre (sin espacios)" autocomplete="username"/></div>
+      <div class="field"><label>Contraseña</label><input type="password" id="r-pass" placeholder="Mínimo 6 caracteres" autocomplete="new-password"/></div>
       <button class="btn-primary" onclick="doRegister()">Crear cuenta</button>
       <div id="r-err" class="err-box hidden"></div>
     </div>
   </div>
 </div>
 
-<!-- APP -->
 <div id="app-screen" class="hidden">
   <div class="topbar">
     <div class="brand">HORA<em>LOG</em></div>
@@ -173,25 +172,30 @@
       <button class="btn-sm" onclick="doLogout()">Salir</button>
     </div>
   </div>
-
   <div class="content">
     <div id="spinner" class="spinner">Cargando…</div>
     <div id="main" class="hidden">
 
-      <!-- Tarifa info -->
-      <div class="rate-info-card">
-        <div class="rate-info-title">Valor de la hora — período actual</div>
-        <div class="rate-formula">
-          Fórmula: <span>promedio(EB mes 1, EB mes 2) × 25%</span>
-        </div>
-        <div class="rate-eb-row" id="eb-row"></div>
-        <div style="margin-top:14px">
-          <div class="sum-lbl">Valor de la hora</div>
-          <div class="rate-value muted" id="rate-display">Sin datos aún</div>
+      <div id="cobro-banner" class="cobro-banner hidden">
+        <div class="cobro-banner-tag">💰 Cobro pendiente</div>
+        <div class="cobro-banner-title" id="cobro-banner-period"></div>
+        <div class="cobro-banner-sub">¿Ya cobraste este período?</div>
+        <div class="cobro-banner-amount" id="cobro-banner-amount">—</div>
+        <div class="cobro-banner-detail" id="cobro-banner-detail"></div>
+        <div class="cobro-banner-actions">
+          <button class="btn-cobro-si" onclick="openCobroModal()">✓ Sí, cobré</button>
+          <button class="btn-cobro-no" onclick="dismissCobro()">Todavía no</button>
         </div>
       </div>
 
-      <!-- Period card -->
+      <div class="rate-info-card">
+        <div class="rate-info-title">Valor de la hora — período actual</div>
+        <div class="rate-formula">Fórmula: <span>promedio(EB mes 1, EB mes 2) × 25%</span></div>
+        <div class="rate-eb-row" id="eb-row"></div>
+        <div class="sum-lbl" style="margin-top:14px">Valor de la hora</div>
+        <div class="rate-value muted" id="rate-display">Sin datos aún</div>
+      </div>
+
       <div class="period-card">
         <div class="period-card-header">
           <div>
@@ -208,17 +212,11 @@
           <div class="cap-notice hidden" id="cap-notice">⚠ Máximo facturable: 100 hs. Las horas extra no se cobran.</div>
           <div class="days-grid" id="days-grid"></div>
           <div class="summary-row">
-            <div>
-              <div class="sum-lbl">Total horas</div>
-              <div class="sum-detail" id="hours-detail"></div>
-            </div>
+            <div><div class="sum-lbl">Total horas</div><div class="sum-detail" id="hours-detail"></div></div>
             <div class="sum-val muted" id="total-hours-disp">0 hs</div>
           </div>
           <div class="summary-row">
-            <div>
-              <div class="sum-lbl">A cobrar</div>
-              <div class="sum-detail" id="total-detail"></div>
-            </div>
+            <div><div class="sum-lbl">A cobrar</div><div class="sum-detail" id="total-detail"></div></div>
             <div class="sum-val muted" id="total-amount">—</div>
           </div>
           <button class="btn-save-days" id="btn-save" onclick="saveDays()">Guardar horas</button>
@@ -232,28 +230,20 @@
   </div>
 </div>
 
-<!-- Admin FAB -->
-<button class="fab hidden" id="admin-fab" onclick="openRateModal()" title="Configurar EB OSDE">⚙</button>
+<div class="fab-group hidden" id="fab-group">
+  <button class="fab fab-sm hidden" id="fab-hist" onclick="openPeriodPicker()" title="Editar período anterior">📅</button>
+  <button class="fab hidden" id="admin-fab" onclick="openRateModal()" title="Configurar EB OSDE">⚙</button>
+</div>
 
 <!-- EB Modal -->
 <div class="overlay hidden" id="rate-modal">
   <div class="modal">
-    <div class="modal-title">EB OSDE — Período</div>
+    <div class="modal-title">EB OSDE</div>
     <div class="modal-sub" id="rate-modal-sub"></div>
-    <div class="formula-box">
-      Valor hora = <strong>promedio(EB1, EB2) × 25%</strong><br>
-      EB1 = valor de cuota del primer mes del período<br>
-      EB2 = valor de cuota del segundo mes del período
-    </div>
+    <div class="formula-box">Valor hora = <strong>promedio(EB1, EB2) × 25%</strong><br>EB1 = cuota del primer mes · EB2 = cuota del segundo mes</div>
     <div class="eb-fields">
-      <div class="field">
-        <label id="eb1-label">EB mes 1 (ARS)</label>
-        <input type="number" id="eb1-input" placeholder="Ej: 120000" min="1" oninput="previewRate()" />
-      </div>
-      <div class="field">
-        <label id="eb2-label">EB mes 2 (ARS)</label>
-        <input type="number" id="eb2-input" placeholder="Ej: 130000" min="1" oninput="previewRate()" />
-      </div>
+      <div class="field"><label id="eb1-label">EB mes 1</label><input type="number" id="eb1-input" placeholder="120000" min="1" oninput="previewRate()"/></div>
+      <div class="field"><label id="eb2-label">EB mes 2</label><input type="number" id="eb2-input" placeholder="130000" min="1" oninput="previewRate()"/></div>
     </div>
     <div class="modal-hint" id="rate-preview"></div>
     <div class="modal-actions">
@@ -263,19 +253,81 @@
   </div>
 </div>
 
-<!-- Change password modal -->
+<!-- Period Picker -->
+<div class="overlay hidden" id="period-picker-modal">
+  <div class="modal">
+    <div class="modal-title">Editar período anterior</div>
+    <div class="modal-sub">Seleccioná el período a cargar o modificar.</div>
+    <div class="pp-year">
+      <button class="pp-arrow" onclick="ppChangeYear(-1)">‹</button>
+      <div class="pp-year-lbl" id="pp-year-lbl">2026</div>
+      <button class="pp-arrow" onclick="ppChangeYear(1)">›</button>
+    </div>
+    <div class="period-picker-grid" id="pp-grid"></div>
+    <div class="modal-actions" style="margin-top:16px">
+      <button class="btn-cancel" onclick="closePeriodPicker()">Cancelar</button>
+      <button class="btn-primary" onclick="goToPeriod()">Editar este período</button>
+    </div>
+  </div>
+</div>
+
+<!-- Past Period Edit -->
+<div class="overlay hidden" id="past-period-modal">
+  <div class="modal past-modal">
+    <div class="modal-title">Editar período</div>
+    <div class="modal-sub" id="past-period-sub"></div>
+    <div style="margin-bottom:16px">
+      <div class="sum-lbl" style="margin-bottom:8px">EB OSDE del período</div>
+      <div class="eb-fields">
+        <div class="field"><label id="past-eb1-lbl">EB mes 1</label><input type="number" id="past-eb1" placeholder="120000" min="1" oninput="previewPastRate()"/></div>
+        <div class="field"><label id="past-eb2-lbl">EB mes 2</label><input type="number" id="past-eb2" placeholder="130000" min="1" oninput="previewPastRate()"/></div>
+      </div>
+      <div class="modal-hint" id="past-rate-preview"></div>
+    </div>
+    <div class="sum-lbl" style="margin-bottom:8px">Horas por día</div>
+    <div class="cap-notice hidden" id="past-cap-notice">⚠ Máximo facturable: 100 hs.</div>
+    <div class="days-grid" id="past-days-grid" style="margin-bottom:12px"></div>
+    <div class="summary-row" style="margin-bottom:16px">
+      <div><div class="sum-lbl">Total</div><div class="sum-detail" id="past-hours-detail"></div></div>
+      <div class="sum-val muted" id="past-total-val">—</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closePastPeriodModal()">Cancelar</button>
+      <button class="btn-primary" onclick="savePastPeriod()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Cobro Modal -->
+<div class="overlay hidden" id="cobro-modal">
+  <div class="modal">
+    <div class="modal-title">Registrar cobro</div>
+    <div class="modal-sub" id="cobro-modal-sub"></div>
+    <div class="cobro-opt">
+      <button class="cobro-opt-btn selected" id="opt-calc" onclick="selectCobroOpt('calc')">El importe calculado</button>
+      <button class="cobro-opt-btn" id="opt-otro" onclick="selectCobroOpt('otro')">Otro monto</button>
+    </div>
+    <div class="cobro-calc-info" id="cobro-calc-info"></div>
+    <div id="otro-monto-field" class="hidden">
+      <div class="field"><label>Monto cobrado (ARS)</label><input type="number" id="cobro-monto-input" placeholder="85000" min="1"/></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeCobroModal()">Cancelar</button>
+      <button class="btn-primary" onclick="confirmarCobro()">Confirmar cobro</button>
+    </div>
+  </div>
+</div>
+
+<!-- Pass Modal -->
 <div class="overlay hidden" id="pass-modal">
   <div class="modal">
     <div class="modal-title">Cambiar contraseña</div>
     <div class="modal-sub">Ingresá tu contraseña actual y la nueva.</div>
-    <div class="field"><label>Contraseña actual</label>
-      <input type="password" id="p-current" placeholder="••••••••" autocomplete="current-password" /></div>
-    <div class="field"><label>Nueva contraseña</label>
-      <input type="password" id="p-new" placeholder="Mínimo 6 caracteres" autocomplete="new-password" /></div>
-    <div class="field"><label>Repetir nueva contraseña</label>
-      <input type="password" id="p-new2" placeholder="••••••••" /></div>
+    <div class="field"><label>Contraseña actual</label><input type="password" id="p-current" placeholder="••••••••" autocomplete="current-password"/></div>
+    <div class="field"><label>Nueva contraseña</label><input type="password" id="p-new" placeholder="Mínimo 6 caracteres" autocomplete="new-password"/></div>
+    <div class="field"><label>Repetir nueva contraseña</label><input type="password" id="p-new2" placeholder="••••••••"/></div>
     <div id="p-err" class="err-box hidden"></div>
-    <div id="p-ok"  class="ok-box  hidden">✓ Contraseña actualizada correctamente</div>
+    <div id="p-ok" class="ok-box hidden">✓ Contraseña actualizada correctamente</div>
     <div class="modal-actions">
       <button class="btn-cancel" onclick="closePassModal()">Cerrar</button>
       <button class="btn-primary" id="btn-chpass" onclick="changePass()">Actualizar</button>
@@ -284,378 +336,367 @@
 </div>
 
 <script>
-const FIREBASE_CONFIG = {
-  apiKey:            "AIzaSyCV8yJ24meEnz3MH2x8YfYxfEGzbhldMPA",
-  authDomain:        "control-de-horas-d0b0e.firebaseapp.com",
-  projectId:         "control-de-horas-d0b0e",
-  storageBucket:     "control-de-horas-d0b0e.firebasestorage.app",
-  messagingSenderId: "759307774178",
-  appId:             "1:759307774178:web:7bf13ccbe49fe371d216bb"
-};
-
-const ADMIN_USER = "hugo";   // case-insensitive
-const DOMAIN     = "horalog.app";
-const MAX_HOURS  = 100;
-
+const FIREBASE_CONFIG={apiKey:"AIzaSyCV8yJ24meEnz3MH2x8YfYxfEGzbhldMPA",authDomain:"control-de-horas-d0b0e.firebaseapp.com",projectId:"control-de-horas-d0b0e",storageBucket:"control-de-horas-d0b0e.firebasestorage.app",messagingSenderId:"759307774178",appId:"1:759307774178:web:7bf13ccbe49fe371d216bb"};
+const ADMIN_USER="hugo",DOMAIN="horalog.app",MAX_HOURS=100;
 firebase.initializeApp(FIREBASE_CONFIG);
-const auth = firebase.auth();
-const db   = firebase.firestore();
+const auth=firebase.auth(),db=firebase.firestore();
+let me=null,isAdmin=false,curPeriodId=null,prevPeriodId=null,curRate=null,curEB=null,dayInputs={},prevPeriodInfo=null,cobroOpt='calc',ppYear=new Date().getFullYear(),ppSelected=null,pastPeriodId=null,pastDayInputs={};
 
-let me = null, isAdmin = false, curPeriodId = null, curRate = null, curEB = null;
-let dayInputs = {};  // { "2026-04-16": value, ... }
+function toEmail(u){return`${u.trim().toLowerCase()}@${DOMAIN}`}
+function isAdminUser(u){return u.displayName&&u.displayName.toLowerCase()===ADMIN_USER}
 
-function toEmail(u) { return `${u.trim().toLowerCase()}@${DOMAIN}`; }
-function isAdminUser(u) { return u.displayName && u.displayName.toLowerCase() === ADMIN_USER; }
-
-auth.onAuthStateChanged(user => {
-  if (user) { me = user; isAdmin = isAdminUser(user); goApp(); }
-  else      { me = null; isAdmin = false; goLogin(); }
+auth.onAuthStateChanged(user=>{
+  if(user){me=user;isAdmin=isAdminUser(user);goApp()}
+  else{me=null;isAdmin=false;goLogin()}
 });
 
-function goLogin() { show('login-screen'); hide('app-screen'); hide('admin-fab'); }
-async function goApp() {
-  hide('login-screen'); show('app-screen');
-  document.getElementById('disp-name').textContent = me.displayName || '—';
-  if (isAdmin) show('admin-fab');
+function goLogin(){show('login-screen');hide('app-screen');hide('fab-group')}
+async function goApp(){
+  hide('login-screen');show('app-screen');
+  document.getElementById('disp-name').textContent=me.displayName||'—';
   await loadAll();
 }
 
-// ── PERIOD UTILS ─────────────────────────────────────────────────────
-function getPeriodId() {
-  const d = new Date();
-  let y = d.getFullYear(), m = d.getMonth();
-  if (d.getDate() < 16) { m === 0 ? (m = 11, y--) : m--; }
-  return `${y}-${String(m + 1).padStart(2, '0')}`;
+function getPeriodId(offset=0){
+  const d=new Date();let y=d.getFullYear(),m=d.getMonth();
+  if(d.getDate()<16){m===0?(m=11,y--):m--}
+  m-=offset;while(m<0){m+=12;y--}
+  return`${y}-${String(m+1).padStart(2,'0')}`
 }
 
-function periodLabel(id) {
-  const [y, m] = id.split('-').map(Number);
-  const MO = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-  const nm = m % 12 + 1, ny = m === 12 ? y + 1 : y;
-  return `16 ${MO[m-1]} – 15 ${MO[nm-1]} ${ny}`;
+function periodLabel(id){
+  const[y,m]=id.split('-').map(Number);
+  const MO=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const nm=m%12+1,ny=m===12?y+1:y;
+  return`16 ${MO[m-1]} – 15 ${MO[nm-1]} ${ny}`
 }
 
-function periodMonths(id) {
-  // Returns [month1Label, month2Label] for a period id like "2026-04"
-  const [y, m] = id.split('-').map(Number);
-  const MO = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-  const nm = m % 12 + 1, ny = m === 12 ? y + 1 : y;
-  return [`${MO[m-1]} ${y}`, `${MO[nm-1]} ${ny}`];
+function periodMonths(id){
+  const[y,m]=id.split('-').map(Number);
+  const MO=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const nm=m%12+1,ny=m===12?y+1:y;
+  return[`${MO[m-1]} ${y}`,`${MO[nm-1]} ${ny}`]
 }
 
-// Returns array of Date objects for the period (16th of month m to 15th of month m+1)
-function getPeriodDays(id) {
-  const [y, m] = id.split('-').map(Number);
-  const days = [];
-  // From 16th of month m to end of month m
-  const daysInM = new Date(y, m, 0).getDate();
-  for (let d = 16; d <= daysInM; d++) days.push(new Date(y, m - 1, d));
-  // From 1st to 15th of month m+1
-  const nm = m % 12 + 1, ny = m === 12 ? y + 1 : y;
-  for (let d = 1; d <= 15; d++) days.push(new Date(ny, nm - 1, d));
-  return days;
+function getPeriodDays(id){
+  const[y,m]=id.split('-').map(Number);
+  const days=[],dim=new Date(y,m,0).getDate();
+  for(let d=16;d<=dim;d++)days.push(new Date(y,m-1,d));
+  const nm=m%12+1,ny=m===12?y+1:y;
+  for(let d=1;d<=15;d++)days.push(new Date(ny,nm-1,d));
+  return days
 }
 
-function dateKey(date) {
-  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
-}
+function dateKey(date){return`${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`}
+function dayLabel(date){return`${'Dom Lun Mar Mié Jue Vie Sáb'.split(' ')[date.getDay()]} ${date.getDate()}`}
+function ars(n){return new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS',minimumFractionDigits:0}).format(n)}
+function calcRate(e1,e2){return((e1+e2)/2)*0.25}
+function totalHrs(days){return Object.values(days).reduce((a,b)=>a+(parseFloat(b)||0),0)}
 
-function dayLabel(date) {
-  const DN = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-  return `${DN[date.getDay()]} ${date.getDate()}`;
-}
-
-function ars(n) {
-  return new Intl.NumberFormat('es-AR',{style:'currency',currency:'ARS',minimumFractionDigits:0}).format(n);
-}
-
-function calcRate(eb1, eb2) {
-  return ((eb1 + eb2) / 2) * 0.25;
-}
-
-// ── LOAD ─────────────────────────────────────────────────────────────
-async function loadAll() {
-  show('spinner'); hide('main');
-  curPeriodId = getPeriodId();
-  document.getElementById('cur-period-label').textContent = periodLabel(curPeriodId);
-
-  // Load EB / rate
-  try {
-    const s = await db.collection('rates').doc(curPeriodId).get();
-    if (s.exists) {
-      curEB = s.data();
-      curRate = calcRate(curEB.eb1, curEB.eb2);
-    } else { curEB = null; curRate = null; }
-  } catch { curEB = null; curRate = null; }
-
+async function loadAll(){
+  show('spinner');hide('main');
+  curPeriodId=getPeriodId(0);prevPeriodId=getPeriodId(1);
+  document.getElementById('cur-period-label').textContent=periodLabel(curPeriodId);
+  try{const s=await db.collection('rates').doc(curPeriodId).get();if(s.exists){curEB=s.data();curRate=calcRate(curEB.eb1,curEB.eb2)}else{curEB=null;curRate=null}}catch{curEB=null;curRate=null}
   renderRateCard();
-
-  // Load days for current period
-  try {
-    const s = await db.collection('hours').doc(me.uid).collection('periods').doc(curPeriodId).get();
-    dayInputs = s.exists ? (s.data().days || {}) : {};
-  } catch { dayInputs = {}; }
-
-  buildDaysGrid();
-  recalc();
-
-  // History
-  try {
-    const snap = await db.collection('hours').doc(me.uid).collection('periods')
-      .orderBy(firebase.firestore.FieldPath.documentId(), 'desc').get();
-    const past = snap.docs.filter(d => d.id !== curPeriodId);
-    if (!past.length) {
-      document.getElementById('hist-list').innerHTML = '<div class="empty-hist">Sin períodos anteriores</div>';
-    } else {
-      const rSnaps = await Promise.all(past.map(d => db.collection('rates').doc(d.id).get()));
-      document.getElementById('hist-list').innerHTML = past.map((doc, i) => {
-        const data = doc.data();
-        const days = data.days || {};
-        const totalHrs = Object.values(days).reduce((a,b) => a + (parseFloat(b)||0), 0);
-        const bill = Math.min(totalHrs, MAX_HOURS);
-        const rdata = rSnaps[i].exists ? rSnaps[i].data() : null;
-        const rate  = rdata ? calcRate(rdata.eb1, rdata.eb2) : null;
-        const tot   = rate != null ? bill * rate : null;
-        return `<div class="hist-item" style="animation-delay:${i*0.04}s">
-          <div>
-            <div class="hist-period">${periodLabel(doc.id)}</div>
-            <div class="hist-hours">${totalHrs.toFixed(1)} hs registradas · ${bill.toFixed(1)} hs facturables</div>
-          </div>
-          <div class="hist-total ${tot!=null?'':'muted'}">${tot!=null ? ars(tot) : 'Sin tarifa'}</div>
-        </div>`;
-      }).join('');
-    }
-  } catch(e) { console.error(e); }
-
-  // Admin modal setup
-  if (isAdmin) {
-    const [m1, m2] = periodMonths(curPeriodId);
-    document.getElementById('rate-modal-sub').textContent = periodLabel(curPeriodId);
-    document.getElementById('eb1-label').textContent = `EB ${m1} (ARS)`;
-    document.getElementById('eb2-label').textContent = `EB ${m2} (ARS)`;
-    if (curEB) {
-      document.getElementById('eb1-input').value = curEB.eb1;
-      document.getElementById('eb2-input').value = curEB.eb2;
-    }
-  }
-
-  hide('spinner'); show('main');
+  try{const s=await db.collection('hours').doc(me.uid).collection('periods').doc(curPeriodId).get();dayInputs=s.exists?(s.data().days||{}):{}}catch{dayInputs={}}
+  buildDaysGrid();recalc();
+  await checkCobroPendiente();
+  await loadHistory();
+  show('fab-group');
+  if(isAdmin){show('admin-fab');show('fab-hist')}else{hide('admin-fab');hide('fab-hist')}
+  hide('spinner');show('main');
 }
 
-// ── RATE CARD ─────────────────────────────────────────────────────────
-function renderRateCard() {
-  const [m1, m2] = periodMonths(curPeriodId);
-  const ebRow = document.getElementById('eb-row');
-  const rateDisp = document.getElementById('rate-display');
-
-  if (curEB) {
-    ebRow.innerHTML = `
-      <div class="rate-eb-item">
-        <div class="rate-eb-lbl">EB ${m1}</div>
-        <div class="rate-eb-val">${ars(curEB.eb1)}</div>
-      </div>
-      <div class="rate-eb-item">
-        <div class="rate-eb-lbl">EB ${m2}</div>
-        <div class="rate-eb-val">${ars(curEB.eb2)}</div>
-      </div>`;
-    rateDisp.textContent = ars(curRate) + '/hs';
-    rateDisp.className = 'rate-value';
-  } else {
-    ebRow.innerHTML = `
-      <div class="rate-eb-item">
-        <div class="rate-eb-lbl">EB ${m1}</div>
-        <div class="rate-eb-val muted">—</div>
-      </div>
-      <div class="rate-eb-item">
-        <div class="rate-eb-lbl">EB ${m2}</div>
-        <div class="rate-eb-val muted">—</div>
-      </div>`;
-    rateDisp.textContent = 'Sin datos aún';
-    rateDisp.className = 'rate-value muted';
+function renderRateCard(){
+  const[m1,m2]=periodMonths(curPeriodId);
+  const ebRow=document.getElementById('eb-row'),rDisp=document.getElementById('rate-display');
+  if(curEB){
+    ebRow.innerHTML=`<div class="rate-eb-item"><div class="rate-eb-lbl">EB ${m1}</div><div class="rate-eb-val">${ars(curEB.eb1)}</div></div><div class="rate-eb-item"><div class="rate-eb-lbl">EB ${m2}</div><div class="rate-eb-val">${ars(curEB.eb2)}</div></div>`;
+    rDisp.textContent=`${ars(curRate)}/hs`;rDisp.className='rate-value';
+  }else{
+    ebRow.innerHTML=`<div class="rate-eb-item"><div class="rate-eb-lbl">EB ${m1}</div><div class="rate-eb-val muted">—</div></div><div class="rate-eb-item"><div class="rate-eb-lbl">EB ${m2}</div><div class="rate-eb-val muted">—</div></div>`;
+    rDisp.textContent='Sin datos aún';rDisp.className='rate-value muted';
   }
 }
 
-// ── DAYS GRID ─────────────────────────────────────────────────────────
-function buildDaysGrid() {
-  const grid = document.getElementById('days-grid');
-  const days = getPeriodDays(curPeriodId);
-  grid.innerHTML = '';
-  days.forEach(date => {
-    const key = dateKey(date);
-    const dow = date.getDay();
-    const isWeekend = dow === 0 || dow === 6;
-    const val = dayInputs[key] || '';
-    const cell = document.createElement('div');
-    cell.className = 'day-cell' + (isWeekend ? ' weekend' : '');
-    cell.innerHTML = `
-      <div class="day-lbl">${dayLabel(date)}</div>
-      <input class="day-input" type="number" min="0" max="24" step="0.5"
-             placeholder="0" value="${val}" data-key="${key}"
-             oninput="onDayInput(this)" />`;
+function buildDaysGrid(){
+  const grid=document.getElementById('days-grid');grid.innerHTML='';
+  getPeriodDays(curPeriodId).forEach(date=>{
+    const key=dateKey(date),dow=date.getDay();
+    const cell=document.createElement('div');
+    cell.className='day-cell'+(dow===0||dow===6?' weekend':'');
+    cell.innerHTML=`<div class="day-lbl">${dayLabel(date)}</div><input class="day-input" type="number" min="0" max="24" step="0.5" placeholder="0" value="${dayInputs[key]||''}" data-key="${key}" oninput="onDayInput(this)"/>`;
     grid.appendChild(cell);
   });
 }
 
-function onDayInput(el) {
-  const key = el.dataset.key;
-  const val = parseFloat(el.value) || 0;
-  if (val > 0) dayInputs[key] = val;
-  else delete dayInputs[key];
+function onDayInput(el){
+  const key=el.dataset.key,val=parseFloat(el.value)||0;
+  if(val>0)dayInputs[key]=val;else delete dayInputs[key];
   recalc();
 }
 
-function recalc() {
-  const totalHrs = Object.values(dayInputs).reduce((a,b) => a + (parseFloat(b)||0), 0);
-  const bill = Math.min(totalHrs, MAX_HOURS);
-  totalHrs > MAX_HOURS ? show('cap-notice') : hide('cap-notice');
-
-  const thEl = document.getElementById('total-hours-disp');
-  const detEl = document.getElementById('hours-detail');
-  const amtEl = document.getElementById('total-amount');
-  const totDet = document.getElementById('total-detail');
-  const headerEl = document.getElementById('header-total');
-
-  thEl.textContent = `${totalHrs.toFixed(1)} hs`;
-  thEl.className = 'sum-val';
-  detEl.textContent = totalHrs > MAX_HOURS ? `${bill.toFixed(1)} hs facturables (máx. ${MAX_HOURS})` : '';
-
-  if (!curRate) {
-    amtEl.textContent = '—'; amtEl.className = 'sum-val muted';
-    totDet.textContent = 'Tarifa no definida aún';
-    headerEl.textContent = '—'; headerEl.className = 'period-total-val muted';
-  } else {
-    const total = bill * curRate;
-    amtEl.textContent = ars(total); amtEl.className = 'sum-val';
-    totDet.textContent = `${bill.toFixed(1)} hs × ${ars(curRate)}/hs`;
-    headerEl.textContent = ars(total); headerEl.className = 'period-total-val';
+function recalc(){
+  const total=totalHrs(dayInputs),bill=Math.min(total,MAX_HOURS);
+  total>MAX_HOURS?show('cap-notice'):hide('cap-notice');
+  document.getElementById('total-hours-disp').textContent=`${total.toFixed(1)} hs`;
+  document.getElementById('total-hours-disp').className='sum-val';
+  document.getElementById('hours-detail').textContent=total>MAX_HOURS?`${bill.toFixed(1)} hs facturables (máx. ${MAX_HOURS})`:'';
+  const amtEl=document.getElementById('total-amount'),headEl=document.getElementById('header-total');
+  if(!curRate){
+    amtEl.textContent='—';amtEl.className='sum-val muted';
+    document.getElementById('total-detail').textContent='Tarifa no definida aún';
+    headEl.textContent='—';headEl.className='period-total-val muted';
+  }else{
+    const t=bill*curRate;
+    amtEl.textContent=ars(t);amtEl.className='sum-val';
+    document.getElementById('total-detail').textContent=`${bill.toFixed(1)} hs × ${ars(curRate)}/hs`;
+    headEl.textContent=ars(t);headEl.className='period-total-val';
   }
 }
 
-// ── SAVE DAYS ─────────────────────────────────────────────────────────
-async function saveDays() {
-  const btn = document.getElementById('btn-save');
-  btn.disabled = true; btn.textContent = '…';
-  try {
-    await db.collection('hours').doc(me.uid).collection('periods').doc(curPeriodId)
-      .set({ days: dayInputs, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
-    const fl = document.getElementById('save-flash');
-    fl.classList.add('show'); setTimeout(() => fl.classList.remove('show'), 2200);
-  } catch { alert('Error al guardar. Intentá de nuevo.'); }
-  btn.disabled = false; btn.textContent = 'Guardar horas';
+async function saveDays(){
+  const btn=document.getElementById('btn-save');btn.disabled=true;btn.textContent='…';
+  try{
+    await db.collection('hours').doc(me.uid).collection('periods').doc(curPeriodId).set({days:dayInputs,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+    const fl=document.getElementById('save-flash');fl.classList.add('show');setTimeout(()=>fl.classList.remove('show'),2200);
+  }catch{alert('Error al guardar.')}
+  btn.disabled=false;btn.textContent='Guardar horas';
 }
 
-// ── ADMIN: EB MODAL ───────────────────────────────────────────────────
-function openRateModal() {
-  previewRate();
-  show('rate-modal');
-}
-function closeRateModal() { hide('rate-modal'); }
-
-function previewRate() {
-  const eb1 = parseFloat(document.getElementById('eb1-input').value) || 0;
-  const eb2 = parseFloat(document.getElementById('eb2-input').value) || 0;
-  const hint = document.getElementById('rate-preview');
-  if (eb1 > 0 && eb2 > 0) {
-    hint.textContent = `Valor de la hora: ${ars(calcRate(eb1, eb2))}/hs`;
-  } else {
-    hint.textContent = '';
-  }
-}
-
-async function saveRate() {
-  const eb1 = parseFloat(document.getElementById('eb1-input').value);
-  const eb2 = parseFloat(document.getElementById('eb2-input').value);
-  if (!eb1 || !eb2 || eb1 <= 0 || eb2 <= 0) { alert('Ingresá ambos valores de EB.'); return; }
-  try {
-    await db.collection('rates').doc(curPeriodId)
-      .set({ eb1, eb2, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
-    curEB = { eb1, eb2 };
-    curRate = calcRate(eb1, eb2);
-    renderRateCard();
-    recalc();
-    closeRateModal();
-  } catch { alert('Error al guardar. Intentá de nuevo.'); }
+async function checkCobroPendiente(){
+  prevPeriodInfo=null;
+  try{
+    const[hSnap,rSnap,cSnap]=await Promise.all([
+      db.collection('hours').doc(me.uid).collection('periods').doc(prevPeriodId).get(),
+      db.collection('rates').doc(prevPeriodId).get(),
+      db.collection('cobros').doc(me.uid).collection('periods').doc(prevPeriodId).get()
+    ]);
+    if(cSnap.exists||!hSnap.exists){hide('cobro-banner');return}
+    const days=hSnap.data().days||{},hrs=totalHrs(days);
+    if(hrs===0){hide('cobro-banner');return}
+    const bill=Math.min(hrs,MAX_HOURS),rate=rSnap.exists?calcRate(rSnap.data().eb1,rSnap.data().eb2):null,tot=rate?bill*rate:null;
+    prevPeriodInfo={hrs,bill,rate,tot};
+    document.getElementById('cobro-banner-period').textContent=periodLabel(prevPeriodId);
+    document.getElementById('cobro-banner-amount').textContent=tot?ars(tot):'Sin tarifa definida';
+    document.getElementById('cobro-banner-detail').textContent=tot?`${bill.toFixed(1)} hs × ${ars(rate)}/hs`:`${bill.toFixed(1)} hs facturables`;
+    show('cobro-banner');
+  }catch(e){console.error(e);hide('cobro-banner')}
 }
 
-// ── CHANGE PASSWORD ───────────────────────────────────────────────────
-function openPassModal() {
-  ['p-current','p-new','p-new2'].forEach(id => document.getElementById(id).value = '');
-  hide('p-err'); hide('p-ok'); show('pass-modal');
-}
-function closePassModal() { hide('pass-modal'); }
+function dismissCobro(){hide('cobro-banner')}
 
-async function changePass() {
-  const current = document.getElementById('p-current').value;
-  const nuevo   = document.getElementById('p-new').value;
-  const nuevo2  = document.getElementById('p-new2').value;
-  const errEl = document.getElementById('p-err');
-  const okEl  = document.getElementById('p-ok');
-  const btn   = document.getElementById('btn-chpass');
-  hide(errEl); hide(okEl);
-  if (!current||!nuevo||!nuevo2) { showErr(errEl,'Completá todos los campos.'); return; }
-  if (nuevo !== nuevo2)          { showErr(errEl,'Las contraseñas nuevas no coinciden.'); return; }
-  if (nuevo.length < 6)          { showErr(errEl,'Mínimo 6 caracteres.'); return; }
-  btn.disabled = true;
-  try {
-    const cred = firebase.auth.EmailAuthProvider.credential(me.email, current);
-    await me.reauthenticateWithCredential(cred);
-    await me.updatePassword(nuevo);
-    show(okEl);
-    ['p-current','p-new','p-new2'].forEach(id => document.getElementById(id).value = '');
-  } catch(e) {
-    showErr(errEl, ['auth/wrong-password','auth/invalid-credential'].includes(e.code)
-      ? 'La contraseña actual es incorrecta.' : 'Error al actualizar. Intentá de nuevo.');
-  }
-  btn.disabled = false;
+function openCobroModal(){
+  cobroOpt='calc';
+  document.getElementById('opt-calc').classList.add('selected');
+  document.getElementById('opt-otro').classList.remove('selected');
+  hide('otro-monto-field');
+  document.getElementById('cobro-modal-sub').textContent=periodLabel(prevPeriodId);
+  const info=prevPeriodInfo;
+  document.getElementById('cobro-calc-info').textContent=info&&info.tot?`Importe calculado: ${ars(info.tot)} (${info.bill.toFixed(1)} hs × ${ars(info.rate)}/hs)`:'No hay tarifa definida para este período.';
+  show('cobro-modal');
+}
+function closeCobroModal(){hide('cobro-modal')}
+
+function selectCobroOpt(opt){
+  cobroOpt=opt;
+  document.getElementById('opt-calc').classList.toggle('selected',opt==='calc');
+  document.getElementById('opt-otro').classList.toggle('selected',opt==='otro');
+  opt==='otro'?show('otro-monto-field'):hide('otro-monto-field');
 }
 
-// ── LOGIN / REGISTER ──────────────────────────────────────────────────
-function switchTab(t) {
-  const isL = t === 'login';
-  document.getElementById('tab-login').classList.toggle('active', isL);
-  document.getElementById('tab-reg').classList.toggle('active', !isL);
-  document.getElementById('form-login').classList.toggle('hidden', !isL);
-  document.getElementById('form-reg').classList.toggle('hidden', isL);
+async function confirmarCobro(){
+  const info=prevPeriodInfo;
+  let monto;
+  if(cobroOpt==='calc'){if(!info||!info.tot){alert('No hay importe calculado. Usá "Otro monto".');return}monto=info.tot}
+  else{monto=parseFloat(document.getElementById('cobro-monto-input').value);if(!monto||monto<=0){alert('Ingresá un monto válido.');return}}
+  try{
+    await db.collection('cobros').doc(me.uid).collection('periods').doc(prevPeriodId).set({monto,horas:info?info.bill:null,valorHora:info?info.rate:null,fecha:firebase.firestore.FieldValue.serverTimestamp()});
+    hide('cobro-modal');hide('cobro-banner');await loadHistory();
+  }catch{alert('Error al guardar el cobro.')}
 }
 
-async function doLogin() {
-  const user = document.getElementById('l-user').value.trim().toLowerCase();
-  const pass = document.getElementById('l-pass').value;
-  const errEl = document.getElementById('l-err');
-  const btn   = document.getElementById('btn-login');
-  hide(errEl); btn.disabled = true;
-  try { await auth.signInWithEmailAndPassword(toEmail(user), pass); }
-  catch(e) {
-    showErr(errEl, ['auth/invalid-credential','auth/wrong-password','auth/user-not-found'].includes(e.code)
-      ? 'Usuario o contraseña incorrectos.' : 'Error al ingresar. Intentá de nuevo.');
-    btn.disabled = false;
-  }
+async function loadHistory(){
+  try{
+    const snap=await db.collection('hours').doc(me.uid).collection('periods').orderBy(firebase.firestore.FieldPath.documentId(),'desc').get();
+    const past=snap.docs.filter(d=>d.id!==curPeriodId);
+    if(!past.length){document.getElementById('hist-list').innerHTML='<div class="empty-hist">Sin períodos anteriores</div>';return}
+    const[rSnaps,cSnaps]=await Promise.all([
+      Promise.all(past.map(d=>db.collection('rates').doc(d.id).get())),
+      Promise.all(past.map(d=>db.collection('cobros').doc(me.uid).collection('periods').doc(d.id).get()))
+    ]);
+    document.getElementById('hist-list').innerHTML=past.map((doc,i)=>{
+      const days=doc.data().days||{},hrs=totalHrs(days),bill=Math.min(hrs,MAX_HOURS);
+      const rdata=rSnaps[i].exists?rSnaps[i].data():null,rate=rdata?calcRate(rdata.eb1,rdata.eb2):null,tot=rate?bill*rate:null;
+      const cobro=cSnaps[i].exists?cSnaps[i].data():null;
+      const badge=cobro?`<span class="badge badge-cobrado">✓ Cobrado: ${ars(cobro.monto)}</span>`:`<span class="badge badge-pendiente">Pendiente</span>`;
+      return`<div class="hist-item" style="animation-delay:${i*.04}s"><div class="hist-left"><div class="hist-period">${periodLabel(doc.id)}</div><div class="hist-hours">${hrs.toFixed(1)} hs · ${bill.toFixed(1)} facturables</div>${badge}</div><div class="hist-right"><div class="hist-total ${tot?'':'muted'}">${tot?ars(tot):'Sin tarifa'}</div></div></div>`;
+    }).join('');
+  }catch(e){console.error(e)}
 }
 
-async function doRegister() {
-  const user = document.getElementById('r-user').value.trim().toLowerCase();
-  const pass = document.getElementById('r-pass').value;
-  const errEl = document.getElementById('r-err');
-  hide(errEl);
-  if (!user||!pass)   { showErr(errEl,'Completá todos los campos.'); return; }
-  if (/\s/.test(user)){ showErr(errEl,'El usuario no puede tener espacios.'); return; }
-  if (pass.length < 6){ showErr(errEl,'La contraseña debe tener al menos 6 caracteres.'); return; }
-  try {
-    const cred = await auth.createUserWithEmailAndPassword(toEmail(user), pass);
-    await cred.user.updateProfile({ displayName: user });
-  } catch(e) {
-    showErr(errEl,
-      e.code === 'auth/email-already-in-use' ? 'El usuario ya existe.' :
-      e.code === 'auth/weak-password'        ? 'Contraseña muy corta.' :
-      'Error al registrar. Intentá de nuevo.');
-  }
+function openRateModal(){
+  const[m1,m2]=periodMonths(curPeriodId);
+  document.getElementById('rate-modal-sub').textContent=periodLabel(curPeriodId);
+  document.getElementById('eb1-label').textContent=`EB ${m1} (ARS)`;
+  document.getElementById('eb2-label').textContent=`EB ${m2} (ARS)`;
+  if(curEB){document.getElementById('eb1-input').value=curEB.eb1;document.getElementById('eb2-input').value=curEB.eb2}
+  previewRate();show('rate-modal');
+}
+function closeRateModal(){hide('rate-modal')}
+function previewRate(){
+  const e1=parseFloat(document.getElementById('eb1-input').value)||0,e2=parseFloat(document.getElementById('eb2-input').value)||0;
+  document.getElementById('rate-preview').textContent=(e1>0&&e2>0)?`Valor de la hora: ${ars(calcRate(e1,e2))}/hs`:'';
+}
+async function saveRate(){
+  const e1=parseFloat(document.getElementById('eb1-input').value),e2=parseFloat(document.getElementById('eb2-input').value);
+  if(!e1||!e2||e1<=0||e2<=0){alert('Ingresá ambos valores de EB.');return}
+  try{
+    await db.collection('rates').doc(curPeriodId).set({eb1:e1,eb2:e2,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+    curEB={eb1:e1,eb2:e2};curRate=calcRate(e1,e2);renderRateCard();recalc();closeRateModal();
+  }catch{alert('Error al guardar.')}
 }
 
-function doLogout() { auth.signOut(); }
+function openPeriodPicker(){ppYear=new Date().getFullYear();ppSelected=null;renderPPGrid();show('period-picker-modal')}
+function closePeriodPicker(){hide('period-picker-modal')}
+function ppChangeYear(d){ppYear+=d;renderPPGrid()}
+function renderPPGrid(){
+  document.getElementById('pp-year-lbl').textContent=ppYear;
+  const MO=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const now=new Date(),cy=now.getFullYear(),cm=now.getMonth();
+  document.getElementById('pp-grid').innerHTML=MO.map((mo,i)=>{
+    const id=`${ppYear}-${String(i+1).padStart(2,'0')}`;
+    const isFuture=(ppYear>cy)||(ppYear===cy&&i>cm);
+    const isCur=id===curPeriodId;
+    if(isFuture||isCur)return`<div class="pp-btn disabled">${mo}</div>`;
+    return`<div class="pp-btn${id===ppSelected?' selected':''}" onclick="ppSelect('${id}')">${mo}</div>`;
+  }).join('');
+}
+function ppSelect(id){ppSelected=id;renderPPGrid()}
+async function goToPeriod(){
+  if(!ppSelected){alert('Seleccioná un período.');return}
+  closePeriodPicker();await openPastPeriodModal(ppSelected);
+}
 
-function show(el) { (typeof el==='string'?document.getElementById(el):el).classList.remove('hidden'); }
-function hide(el) { (typeof el==='string'?document.getElementById(el):el).classList.add('hidden'); }
-function showErr(el, msg) { el.textContent = msg; show(el); }
+async function openPastPeriodModal(periodId){
+  pastPeriodId=periodId;pastDayInputs={};
+  document.getElementById('past-period-sub').textContent=periodLabel(periodId);
+  const[m1,m2]=periodMonths(periodId);
+  document.getElementById('past-eb1-lbl').textContent=`EB ${m1} (ARS)`;
+  document.getElementById('past-eb2-lbl').textContent=`EB ${m2} (ARS)`;
+  document.getElementById('past-eb1').value='';document.getElementById('past-eb2').value='';
+  document.getElementById('past-rate-preview').textContent='';
+  try{
+    const[rSnap,hSnap]=await Promise.all([
+      db.collection('rates').doc(periodId).get(),
+      db.collection('hours').doc(me.uid).collection('periods').doc(periodId).get()
+    ]);
+    if(rSnap.exists){document.getElementById('past-eb1').value=rSnap.data().eb1;document.getElementById('past-eb2').value=rSnap.data().eb2;previewPastRate()}
+    if(hSnap.exists)pastDayInputs=hSnap.data().days||{};
+  }catch{}
+  buildPastDaysGrid();recalcPast();show('past-period-modal');
+}
+function closePastPeriodModal(){hide('past-period-modal')}
+
+function buildPastDaysGrid(){
+  const grid=document.getElementById('past-days-grid');grid.innerHTML='';
+  getPeriodDays(pastPeriodId).forEach(date=>{
+    const key=dateKey(date),dow=date.getDay();
+    const cell=document.createElement('div');
+    cell.className='day-cell'+(dow===0||dow===6?' weekend':'');
+    cell.innerHTML=`<div class="day-lbl">${dayLabel(date)}</div><input class="day-input" type="number" min="0" max="24" step="0.5" placeholder="0" value="${pastDayInputs[key]||''}" data-key="${key}" oninput="onPastDayInput(this)"/>`;
+    grid.appendChild(cell);
+  });
+}
+
+function onPastDayInput(el){
+  const key=el.dataset.key,val=parseFloat(el.value)||0;
+  if(val>0)pastDayInputs[key]=val;else delete pastDayInputs[key];
+  recalcPast();
+}
+
+function previewPastRate(){
+  const e1=parseFloat(document.getElementById('past-eb1').value)||0,e2=parseFloat(document.getElementById('past-eb2').value)||0;
+  document.getElementById('past-rate-preview').textContent=(e1>0&&e2>0)?`Valor de la hora: ${ars(calcRate(e1,e2))}/hs`:'';
+  recalcPast();
+}
+
+function recalcPast(){
+  const hrs=totalHrs(pastDayInputs),bill=Math.min(hrs,MAX_HOURS);
+  hrs>MAX_HOURS?show('past-cap-notice'):hide('past-cap-notice');
+  const e1=parseFloat(document.getElementById('past-eb1').value)||0,e2=parseFloat(document.getElementById('past-eb2').value)||0;
+  const rate=(e1>0&&e2>0)?calcRate(e1,e2):null,tot=rate?bill*rate:null;
+  const tv=document.getElementById('past-total-val');
+  document.getElementById('past-hours-detail').textContent=`${hrs.toFixed(1)} hs · ${bill.toFixed(1)} facturables`;
+  if(tot){tv.textContent=`${ars(tot)} (${bill.toFixed(1)} hs × ${ars(rate)}/hs)`;tv.className='sum-val';tv.style.fontSize='1.2rem'}
+  else{tv.textContent=hrs>0?`${hrs.toFixed(1)} hs (sin tarifa)`:'—';tv.className='sum-val muted'}
+}
+
+async function savePastPeriod(){
+  const e1=parseFloat(document.getElementById('past-eb1').value),e2=parseFloat(document.getElementById('past-eb2').value);
+  if(!e1||!e2||e1<=0||e2<=0){alert('Ingresá ambos valores de EB para este período.');return}
+  try{
+    await Promise.all([
+      db.collection('rates').doc(pastPeriodId).set({eb1:e1,eb2:e2,updatedAt:firebase.firestore.FieldValue.serverTimestamp()}),
+      db.collection('hours').doc(me.uid).collection('periods').doc(pastPeriodId).set({days:pastDayInputs,updatedAt:firebase.firestore.FieldValue.serverTimestamp()})
+    ]);
+    closePastPeriodModal();await loadHistory();
+    alert('Período guardado correctamente.');
+  }catch{alert('Error al guardar.')}
+}
+
+function openPassModal(){
+  ['p-current','p-new','p-new2'].forEach(id=>document.getElementById(id).value='');
+  hide('p-err');hide('p-ok');show('pass-modal');
+}
+function closePassModal(){hide('pass-modal')}
+async function changePass(){
+  const current=document.getElementById('p-current').value,nuevo=document.getElementById('p-new').value,nuevo2=document.getElementById('p-new2').value;
+  const errEl=document.getElementById('p-err'),okEl=document.getElementById('p-ok'),btn=document.getElementById('btn-chpass');
+  hide(errEl);hide(okEl);
+  if(!current||!nuevo||!nuevo2){showErr(errEl,'Completá todos los campos.');return}
+  if(nuevo!==nuevo2){showErr(errEl,'Las contraseñas nuevas no coinciden.');return}
+  if(nuevo.length<6){showErr(errEl,'Mínimo 6 caracteres.');return}
+  btn.disabled=true;
+  try{
+    const cred=firebase.auth.EmailAuthProvider.credential(me.email,current);
+    await me.reauthenticateWithCredential(cred);await me.updatePassword(nuevo);
+    show(okEl);['p-current','p-new','p-new2'].forEach(id=>document.getElementById(id).value='');
+  }catch(e){showErr(errEl,['auth/wrong-password','auth/invalid-credential'].includes(e.code)?'La contraseña actual es incorrecta.':'Error al actualizar.')}
+  btn.disabled=false;
+}
+
+function switchTab(t){
+  const isL=t==='login';
+  document.getElementById('tab-login').classList.toggle('active',isL);
+  document.getElementById('tab-reg').classList.toggle('active',!isL);
+  document.getElementById('form-login').classList.toggle('hidden',!isL);
+  document.getElementById('form-reg').classList.toggle('hidden',isL);
+}
+
+async function doLogin(){
+  const user=document.getElementById('l-user').value.trim().toLowerCase(),pass=document.getElementById('l-pass').value;
+  const errEl=document.getElementById('l-err'),btn=document.getElementById('btn-login');
+  hide(errEl);btn.disabled=true;
+  try{await auth.signInWithEmailAndPassword(toEmail(user),pass)}
+  catch(e){showErr(errEl,['auth/invalid-credential','auth/wrong-password','auth/user-not-found'].includes(e.code)?'Usuario o contraseña incorrectos.':'Error al ingresar.');btn.disabled=false}
+}
+
+async function doRegister(){
+  const user=document.getElementById('r-user').value.trim().toLowerCase(),pass=document.getElementById('r-pass').value;
+  const errEl=document.getElementById('r-err');hide(errEl);
+  if(!user||!pass){showErr(errEl,'Completá todos los campos.');return}
+  if(/\s/.test(user)){showErr(errEl,'El usuario no puede tener espacios.');return}
+  if(pass.length<6){showErr(errEl,'La contraseña debe tener al menos 6 caracteres.');return}
+  try{const cred=await auth.createUserWithEmailAndPassword(toEmail(user),pass);await cred.user.updateProfile({displayName:user})}
+  catch(e){showErr(errEl,e.code==='auth/email-already-in-use'?'El usuario ya existe.':e.code==='auth/weak-password'?'Contraseña muy corta.':'Error al registrar.')}
+}
+
+function doLogout(){auth.signOut()}
+function show(el){(typeof el==='string'?document.getElementById(el):el).classList.remove('hidden')}
+function hide(el){(typeof el==='string'?document.getElementById(el):el).classList.add('hidden')}
+function showErr(el,msg){el.textContent=msg;show(el)}
 </script>
 </body>
 </html>
