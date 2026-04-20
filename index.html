@@ -468,20 +468,31 @@ async function saveDays(){
 async function checkCobroPendiente(){
   prevPeriodInfo=null;
   try{
-    const[hSnap,rSnap,cSnap]=await Promise.all([
-      db.collection('hours').doc(me.uid).collection('periods').doc(prevPeriodId).get(),
-      db.collection('rates').doc(prevPeriodId).get(),
-      db.collection('cobros').doc(me.uid).collection('periods').doc(prevPeriodId).get()
-    ]);
-    if(cSnap.exists||!hSnap.exists){hide('cobro-banner');return}
-    const days=hSnap.data().days||{},hrs=totalHrs(days);
-    if(hrs===0){hide('cobro-banner');return}
-    const bill=Math.min(hrs,MAX_HOURS),rate=rSnap.exists?calcRate(rSnap.data().eb1,rSnap.data().eb2):null,tot=rate?bill*rate:null;
-    prevPeriodInfo={hrs,bill,rate,tot};
-    document.getElementById('cobro-banner-period').textContent=periodLabel(prevPeriodId);
-    document.getElementById('cobro-banner-amount').textContent=tot?ars(tot):'Sin tarifa definida';
-    document.getElementById('cobro-banner-detail').textContent=tot?`${bill.toFixed(1)} hs × ${ars(rate)}/hs`:`${bill.toFixed(1)} hs facturables`;
-    show('cobro-banner');
+    // Get all past periods with hours
+    const snap=await db.collection('hours').doc(me.uid).collection('periods')
+      .orderBy(firebase.firestore.FieldPath.documentId(),'desc').get();
+    const past=snap.docs.filter(d=>d.id!==curPeriodId);
+    if(!past.length){hide('cobro-banner');return}
+
+    // Find the most recent period that has hours and is not yet paid
+    for(const doc of past){
+      const days=doc.data().days||{},hrs=totalHrs(days);
+      if(hrs===0)continue;
+      const[rSnap,cSnap]=await Promise.all([
+        db.collection('rates').doc(doc.id).get(),
+        db.collection('cobros').doc(me.uid).collection('periods').doc(doc.id).get()
+      ]);
+      if(cSnap.exists)continue; // already paid, check next
+      const bill=Math.min(hrs,MAX_HOURS),rate=rSnap.exists?calcRate(rSnap.data().eb1,rSnap.data().eb2):null,tot=rate?bill*rate:null;
+      prevPeriodId=doc.id;
+      prevPeriodInfo={hrs,bill,rate,tot};
+      document.getElementById('cobro-banner-period').textContent=periodLabel(doc.id);
+      document.getElementById('cobro-banner-amount').textContent=tot?ars(tot):'Sin tarifa definida';
+      document.getElementById('cobro-banner-detail').textContent=tot?`${bill.toFixed(1)} hs × ${ars(rate)}/hs`:`${bill.toFixed(1)} hs facturables`;
+      show('cobro-banner');
+      return;
+    }
+    hide('cobro-banner');
   }catch(e){console.error(e);hide('cobro-banner')}
 }
 
@@ -513,7 +524,8 @@ async function confirmarCobro(){
   else{monto=parseFloat(document.getElementById('cobro-monto-input').value);if(!monto||monto<=0){alert('Ingresá un monto válido.');return}}
   try{
     await db.collection('cobros').doc(me.uid).collection('periods').doc(prevPeriodId).set({monto,horas:info?info.bill:null,valorHora:info?info.rate:null,fecha:firebase.firestore.FieldValue.serverTimestamp()});
-    hide('cobro-modal');hide('cobro-banner');await loadHistory();
+    hide('cobro-modal');hide('cobro-banner');
+    await Promise.all([checkCobroPendiente(),loadHistory()]);
   }catch{alert('Error al guardar el cobro.')}
 }
 
@@ -641,9 +653,10 @@ async function savePastPeriod(){
       db.collection('rates').doc(pastPeriodId).set({eb1:e1,eb2:e2,updatedAt:firebase.firestore.FieldValue.serverTimestamp()}),
       db.collection('hours').doc(me.uid).collection('periods').doc(pastPeriodId).set({days:pastDayInputs,updatedAt:firebase.firestore.FieldValue.serverTimestamp()})
     ]);
-    closePastPeriodModal();await loadHistory();
-    alert('Período guardado correctamente.');
-  }catch{alert('Error al guardar.')}
+    closePastPeriodModal();
+    await checkCobroPendiente();
+    await loadHistory();
+  }catch(e){console.error(e);alert('Error al guardar.')}
 }
 
 function openPassModal(){
